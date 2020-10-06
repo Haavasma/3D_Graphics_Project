@@ -1,15 +1,13 @@
 package main
 
 import (
-	"encoding/hex"
+	"unicode/utf8"
 	"fmt"
 	"net"
 )
 
 //yo
 func main() {
-	fmt.Println("Hello World!")
-
 	//Basic variables
 	port := ":8080"
 	protocol := "udp"
@@ -22,7 +20,7 @@ func main() {
 	}
 
 	//Output
-	fmt.Println("Coded by Roberto E. Zubieta\nReading " + protocol + " from " + udpAddr.String())
+	fmt.Println("\nReading " + protocol + " from " + udpAddr.String())
 
 	//Create the connection
 	udpConn, err := net.ListenUDP(protocol, udpAddr)
@@ -41,11 +39,19 @@ func display(conn *net.UDPConn) {
 
 	var buf [2048]byte
 	n, err := conn.Read(buf[0:])
+	fmt.Println(n);
 	if err != nil {
 		fmt.Println("Error Reading")
 		return
 	} else {
-		fmt.Println(hex.EncodeToString(buf[0:n]))
+		message := "";
+		totSize := 0;
+		for i:=0; i<n; i++ {
+			r, size := utf8.DecodeRune(buf[i:n])
+			message+= string(r)
+			totSize += size;
+		}
+		fmt.Println(message)
 		fmt.Println("Package Done")
 	}
 
