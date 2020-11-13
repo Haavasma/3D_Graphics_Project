@@ -16,3 +16,9 @@ type SafeQueue struct {
 	Q   []net.Conn
 	Mux sync.Mutex
 }
+
+// SafeChannelTCPConnSlice thread safe channel list of tcp connections
+type SafeChannelTCPConnSlice struct {
+	V   map[string][]net.Conn
+	Mux sync.Mutex
+}

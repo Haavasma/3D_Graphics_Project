@@ -169,10 +169,33 @@ namespace GameNetWorkClient
                 myTurn = !myTurn;
             }
         }
+        
+        public void EndTurn() {
+            Thread endTurnThread = new Thread(new ThreadStart(() => {
+                ChannelMessage msg = new ChannelMessage();
+                msg.channel = channel;
 
-        public Dictionary<string, FormattedTransform> getTransforms()
-        {
-            return transforms;
+                msg.type = "endTurn";
+                byte[] jsonUtf8Bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(msg));
+
+                NetworkStream stream = tcpClient.GetStream();
+                // Send the message to the connected TcpServer.
+                stream.Write(jsonUtf8Bytes, 0, jsonUtf8Bytes.Length);
+
+            }));
+            endTurnThread.Start();
+        }
+
+
+        public Transform GetTransform(Transform tf) {
+            if(transforms.ContainsKey(tf.name))
+            {
+                tf.transform.position = transforms[tf.name].position;
+                tf.transform.rotation = transforms[tf.name].rotation;
+                tf.transform.localScale = transforms[tf.name].scale;
+                tf.GetComponent<Rigidbody>().velocity = transforms[tf.name].velocity;
+            }
+            return tf;
         }
 
         private byte[] toBytes(string text)
@@ -213,6 +236,8 @@ public class FormattedTransform : ChannelMessage
     public Quaternion rotation;
     public Vector3 scale;
 
+    public Vector3 velocity;    
+
     public FormattedTransform(string objectId, string msgType, string _channel, Transform tf)
     {
         id = objectId;
@@ -221,6 +246,7 @@ public class FormattedTransform : ChannelMessage
         position = tf.position;
         rotation = tf.rotation;
         scale = tf.localScale;
+        velocity = tf.GetComponent<Rigidbody>().velocity;
     }
 
     public FormattedTransform()

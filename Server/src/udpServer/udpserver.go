@@ -46,8 +46,6 @@ func handleTransform(conn *net.UDPConn, result map[string]interface{}, addr *net
 	}
 	addressesToSend := channels.V[channel]
 
-	fmt.Println(addressesToSend)
-
 	bytes, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println("Can't serialize", result)
@@ -70,7 +68,6 @@ func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPA
 		fmt.Println("could not read channel")
 	}
 
-	channels.Mux.Lock()
 	inChannel := false
 	for i := 0; i < len(channels.V[channel]); i++ {
 		if addr.IP.Equal(channels.V[channel][i].IP) && channels.V[channel][i].Port == addr.Port {
@@ -78,7 +75,8 @@ func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPA
 		}
 	}
 	if !inChannel {
+		channels.Mux.Lock()
 		channels.V[channel] = append(channels.V[channel], addr)
+		channels.Mux.Unlock()
 	}
-	channels.Mux.Unlock()
 }

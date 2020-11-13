@@ -13,6 +13,7 @@ import (
 )
 
 var queue = data.SafeQueue{Q: []net.Conn{}}
+var channels = data.SafeChannelTCPConnSlice{V: make(map[string][]net.Conn)}
 
 // ReadTCP reads tcp
 func ReadTCP(socket net.Listener) {
@@ -58,7 +59,6 @@ func checkQueue() {
 
 	for {
 		queue.Mux.Lock()
-		fmt.Println(queue.Q)
 		for i := 0; i < len(queue.Q); i++ {
 			pingObj := make(map[string]interface{})
 			pingObj["type"] = "ping"
@@ -92,6 +92,10 @@ func checkQueue() {
 				queue.Q[0].Write(bytes1)
 				queue.Q[1].Write(bytes2)
 
+				channels.Mux.Lock()
+				channels.V[newChannelUUID] = append(channels.V[newChannelUUID], queue.Q[0], queue.Q[1])
+				channels.Mux.Unlock()
+
 				queue.Q = queue.Q[2:]
 
 				if len(queue.Q) < 2 {
@@ -111,5 +115,22 @@ func handleQueue(conn net.Conn, result map[string]interface{}) {
 }
 
 func handleEndTurn(conn net.Conn, result map[string]interface{}) {
+	channel, ok := result["channel"].(string)
 
+	if !ok {
+		fmt.Println("could not read channel")
+		return
+	}
+	connToSend := channels.V[channel]
+
+	sendObj := make(map[string]interface{})
+	sendObj["type"] = "toggleTurn"
+	bytes, err := json.Marshal(sendObj)
+	if err != nil {
+		fmt.Println("Can't serialize", sendObj)
+	}
+
+	for _, conn := range connToSend {
+		conn.Write(bytes)
+	}
 }

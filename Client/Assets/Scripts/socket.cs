@@ -30,27 +30,24 @@ public class socket : MonoBehaviour
         }
         else
         {
-            Dictionary<string, FormattedTransform> transforms = client.getTransforms();
-
-            foreach (KeyValuePair<string, FormattedTransform> entry in transforms)
+            
+            for (int i = 0; i < cubes.transform.childCount; i++)
             {
-                GameObject piece = GameObject.Find(entry.Key);
-                piece.transform.position = entry.Value.position;
-                piece.transform.rotation = entry.Value.rotation;
-                piece.transform.localScale = entry.Value.scale;
+               Transform newTransform =  client.GetTransform(cubes.transform.GetChild(i));
+               cubes.transform.GetChild(i).position = newTransform.position;
+               cubes.transform.GetChild(i).rotation = newTransform.rotation;
+               cubes.transform.GetChild(i).localScale = newTransform.localScale;
+               cubes.transform.GetChild(i).GetComponent<Rigidbody>().velocity = newTransform.GetComponent<Rigidbody>().velocity;
             }
-            /*
-                        Transform piece = cubes.transform.GetChild(1).transform;
-
-                        piece.position = new Vector3(transforms["Cube (1)"].position.x, transforms["Cube (1)"].position.y, transforms["Cube (1)"].position.z - 10.0f);
-                        piece.rotation = transforms["Cube (1)"].rotation;
-                        piece.localScale = transforms["Cube (1)"].scale;
-                        */
         }
         if (client.getChannel() != "")
         {
             myTurn = client.getMyTurn();
         }
+    }
+
+    public void EndTurn(){
+        client.EndTurn();
     }
 
 }
