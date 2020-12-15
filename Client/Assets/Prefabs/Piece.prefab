@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8776486407476372069}
   - component: {fileID: 8776486407476372072}
   - component: {fileID: 7363660859423331328}
+  - component: {fileID: 2445893082364465875}
   m_Layer: 0
   m_Name: Piece
   m_TagString: Untagged
@@ -123,4 +124,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b20e01947c9ca0e42827ba585be14436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fallSpeed: 0.002
+  falling: 1
+  fallSpeed: 0.005
+  onTouchFriction: 0
+--- !u!114 &2445893082364465875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8776486407476372067}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  color: 2
+  eraseRenderer: 0

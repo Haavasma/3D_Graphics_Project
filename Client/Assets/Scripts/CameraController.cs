@@ -30,11 +30,6 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-            if(Input.mouseScrollDelta.y != 0){
-                Debug.Log("mouse delta: " + Input.mouseScrollDelta.y);
-                Debug.Log("scrollValue: " + scrollValue);
-            }
             if(scrollValue < maxScroll && Input.mouseScrollDelta.y < 0){
                 scrollValue -= Input.mouseScrollDelta.y;
             } else if(scrollValue > minScroll && Input.mouseScrollDelta.y > 0){

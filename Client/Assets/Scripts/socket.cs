@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using GameNetWorkClient;
 
-public class socket : MonoBehaviour
+public class Socket : MonoBehaviour
 {
     // Start is called before the first frame update
     private NetworkClient client;

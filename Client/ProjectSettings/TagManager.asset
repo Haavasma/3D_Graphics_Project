@@ -6,6 +6,12 @@ TagManager:
   tags:
   - CameraFocus
   - CubeHolder
+  - Ground
+  - TopPiece
+  - BottomPiece
+  - SpawnPoint
+  - MovedByPlayer
+  - DeadPiece
   layers:
   - Default
   - TransparentFX
