@@ -1,4 +1,4 @@
-package udpserver
+package udpreader
 
 import (
 	"encoding/json"

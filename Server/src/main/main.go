@@ -5,8 +5,8 @@ import (
 	"net"
 	"os"
 
-	"../tcpserver"
-	"../udpserver"
+	"../tcpreader"
+	"../udpreader"
 )
 
 //yo
@@ -36,7 +36,7 @@ func main() {
 	}
 	defer udpConn.Close()
 
-	go udpserver.ReadUDP(udpConn)
+	go udpreader.ReadUDP(udpConn)
 
-	tcpserver.ReadTCP(tcpSocket)
+	tcpreader.ReadTCP(tcpSocket)
 }

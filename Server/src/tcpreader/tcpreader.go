@@ -1,4 +1,4 @@
-package tcpserver
+package tcpreader
 
 import (
 	"encoding/json"
