@@ -16,7 +16,7 @@ jobs:
         path: Server/
         remote_path: /game_server
         remote_host: ${{secrets.HOST}}
-        remote_user: debian
+        remote_user: haavard_stavnas_markhus_gmail_co
         remote_key: ${{ secrets.PRIVATE_KEY }}
     - name: running service
       uses: fifsky/ssh-action@master
@@ -24,5 +24,5 @@ jobs:
         command: |
           systemctl --user restart gameserver
         host: ${{secrets.HOST}}
-        user: root 
+        user: haavard_stavnas_markhus_gmail_co
         key: ${{secrets.PRIVATE_KEY}}
