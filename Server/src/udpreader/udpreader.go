@@ -31,8 +31,6 @@ func handleMessage(conn *net.UDPConn, buf [1024]byte, n int, addr *net.UDPAddr) 
 	switch res := result["type"]; res {
 	case "transform":
 		handleTransform(conn, result, addr)
-	case "velocity":
-		handleVelocity(conn, result, addr)
 	case "ping":
 		handlePing(conn, result, addr)
 	}
@@ -63,12 +61,11 @@ func handleVelocity(conn *net.UDPConn, result map[string]interface{}, addr *net.
 
 func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPAddr) {
 	channel, ok := result["channel"].(string)
-	channels.Mux.Lock()
-	fmt.Println(channels.V)
 	if !ok {
 		fmt.Println("could not read channel")
 	}
-
+	fmt.Println("got ping from user")
+	channels.Mux.Lock()
 	inChannel := false
 	for i := 0; i < len(channels.V[channel]); i++ {
 		if addr.IP.Equal(channels.V[channel][i].IP) && channels.V[channel][i].Port == addr.Port {
