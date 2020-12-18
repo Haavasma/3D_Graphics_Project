@@ -63,7 +63,8 @@ func handleVelocity(conn *net.UDPConn, result map[string]interface{}, addr *net.
 
 func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPAddr) {
 	channel, ok := result["channel"].(string)
-
+	channels.Mux.Lock()
+	fmt.Println(channels.V)
 	if !ok {
 		fmt.Println("could not read channel")
 	}
@@ -72,11 +73,11 @@ func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPA
 	for i := 0; i < len(channels.V[channel]); i++ {
 		if addr.IP.Equal(channels.V[channel][i].IP) && channels.V[channel][i].Port == addr.Port {
 			inChannel = true
+			break
 		}
 	}
 	if !inChannel {
-		channels.Mux.Lock()
 		channels.V[channel] = append(channels.V[channel], addr)
-		channels.Mux.Unlock()
 	}
+	channels.Mux.Unlock()
 }

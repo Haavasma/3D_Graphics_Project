@@ -20,22 +20,36 @@ namespace GameNetWorkClient
 
         private bool myTurn = false;
 
+        private bool inGame = false;
+
+        private int result = -1;
+
+        private float messageCD = 0.01f;
+
+        private float lastSentTime;
+
         private static Mutex mutex = new Mutex();
 
         private static Mutex channelMutex = new Mutex();
 
+        private static Mutex inGameMutex = new Mutex();
+
+
         Dictionary<string, FormattedTransform> transforms = new Dictionary<string, FormattedTransform>();
-        public NetworkClient()
-        {
-            udpClient = new UdpClient("localhost", 8080);
+
+        public NetworkClient(){
+            lastSentTime = Time.time;
+        }
+
+        public void Connect(){
             tcpClient = new TcpClient("localhost", 8081);
+            udpClient = new UdpClient("localhost", 8080);
+
 
             Thread readThread = new Thread(new ThreadStart(ReadUDP));
             readThread.Start();
             Thread readTCPThread = new Thread(new ThreadStart(ReadTCP));
             readTCPThread.Start();
-            Thread pingChannelThread = new Thread(new ThreadStart(PingChannel));
-            pingChannelThread.Start();
         }
 
         public void SendTransform(string objectId, Transform message)
@@ -45,11 +59,13 @@ namespace GameNetWorkClient
                 byte[] jsonUtf8Bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(new FormattedTransform(objectId, "transform", channel, message)));
 
                 udpClient.Send(jsonUtf8Bytes, jsonUtf8Bytes.Length);
+                lastSentTime = Time.time;
             }
             catch
             {
                 Debug.Log("could not send message");
             }
+            //lastSentTime = Time.time;
         }
 
         public void queue()
@@ -75,6 +91,48 @@ namespace GameNetWorkClient
             queueThread.Start();
         }
 
+        public void dequeue()
+        {
+            Thread dequeueThread = new Thread(new ThreadStart(() => {
+                try
+                {
+                    Message msg = new Message();
+                    msg.type = "dequeue";
+                    byte[] jsonutf8Bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(msg));
+                    NetworkStream stream= tcpClient.GetStream();
+
+                    stream.Write(jsonutf8Bytes, 0, jsonutf8Bytes.Length);
+                }
+                catch
+                {
+                    Debug.Log("could not send dequeue");
+                }
+            }));
+            dequeueThread.Start();
+        }
+
+        public void EndGame()
+        {
+            Thread endGameThread = new Thread(new ThreadStart(() =>{
+                try
+                {
+                    ChannelMessage msg = new ChannelMessage();
+                    msg.channel = channel;
+                    msg.type = "gameLost";
+
+                    byte[] jsonUtf8Bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(msg));
+
+                    tcpClient.GetStream().Write(jsonUtf8Bytes, 0, jsonUtf8Bytes.Length);
+                    Debug.Log("sending tcp package for end game");
+                }
+                catch
+                {
+                    Debug.Log("could not send endgame-message");
+                }
+            }));
+            endGameThread.Start();
+        }
+
         public string getChannel()
         {
             return channel;
@@ -84,6 +142,17 @@ namespace GameNetWorkClient
         public bool getMyTurn()
         {
             return myTurn;
+        }
+
+        public bool InGame()
+        {
+            return channel != "";
+        }
+
+        public int Result()
+        {
+            //returns -1 if not finished, 0 if loss and 1 if win
+            return result;
         }
 
         private void ReadUDP()
@@ -156,17 +225,35 @@ namespace GameNetWorkClient
                 channel = game.channel;
                 myTurn = game.myTurn;
                 channelMutex.ReleaseMutex();
+                Thread pingChannelThread = new Thread(new ThreadStart(PingChannel));
+                pingChannelThread.Start();
             }
             else if (temp.type == "transform")
             {
                 FormattedTransform tf = JsonUtility.FromJson<FormattedTransform>(message);
-                mutex.WaitOne();
-                transforms[tf.id] = tf;
-                mutex.ReleaseMutex();
+                if(tf.channel == channel)
+                {
+                    mutex.WaitOne();
+                    transforms[tf.id] = tf;
+                    mutex.ReleaseMutex();
+                }
             }
             else if (temp.type == "toggleTurn")
             {
                 myTurn = !myTurn;
+            }
+            else if(temp.type == "EndGame")
+            {
+                GameEnd g = JsonUtility.FromJson<GameEnd>(message);
+                Debug.Log(message);
+                result = g.result;
+                Debug.Log(g.result);
+                channelMutex.WaitOne();
+                channel = "";
+                channelMutex.ReleaseMutex();
+                mutex.WaitOne();
+                transforms = new Dictionary<string, FormattedTransform>();
+                mutex.ReleaseMutex();
             }
         }
         
@@ -220,6 +307,11 @@ public class ChannelMessage : Message {
 public class NewGame : ChannelMessage
 {
     public bool myTurn;
+}
+
+public class GameEnd : ChannelMessage
+{
+    public int result;
 }
 
 public class Velocity : Message
