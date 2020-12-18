@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: fixing IP
     - run: echo "${{secrets.LOCAL_HOST_ADDRESS}}" > Server/src/data/address && cat Server/src/data/address
     - name: rsync deployments
       uses: burnett01/rsync-deployments@4.1
