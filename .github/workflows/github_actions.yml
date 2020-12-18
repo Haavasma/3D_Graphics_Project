@@ -1,0 +1,28 @@
+name: DEPLOY
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: rsync deployments
+      uses: burnett01/rsync-deployments@4.1
+      with:
+        switches: -avzr --delete
+        path: Server/
+        remote_path: /game_server
+        remote_host: ${{secrets.HOST}}
+        remote_user: debian
+        remote_key: ${{ secrets.PRIVATE_KEY }}
+    - name: running service
+      uses: fifsky/ssh-action@master
+      with:
+        command: |
+          systemctl --user restart gameserver
+        host: ${{secrets.HOST}}
+        user: root 
+        key: ${{secrets.PRIVATE_KEY}}
