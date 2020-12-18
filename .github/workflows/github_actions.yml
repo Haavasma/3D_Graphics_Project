@@ -8,10 +8,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: fixing ip
-    - run: echo "${{secrets.LOCAL_HOST_ADDRESS}}" > Server/src/data/address && cat Server/src/data/address
-
     - uses: actions/checkout@v2
     - name: rsync deployments
       uses: burnett01/rsync-deployments@4.1
@@ -22,6 +18,7 @@ jobs:
         remote_host: ${{secrets.HOST}}
         remote_user: haavard_stavnas_markhus_gmail_co
         remote_key: ${{ secrets.PRIVATE_KEY }}
+    - run: echo "${{secrets.LOCAL_HOST_ADDRESS}}" > Server/src/data/address && cat Server/src/data/address
     - name: running service
       uses: fifsky/ssh-action@master
       with:
