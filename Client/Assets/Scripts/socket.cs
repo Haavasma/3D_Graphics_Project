@@ -21,7 +21,7 @@ public class Socket : MonoBehaviour
     {
         cubes = GameObject.Find("Cubes");
         client = new NetworkClient();
-        client.Connect();
+        client.Connect("35.228.141.165");
         gameController = GameObject.Find("GameController").GetComponent<GameController>();
         startTime = Time.time;
     }

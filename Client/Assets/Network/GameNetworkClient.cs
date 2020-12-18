@@ -41,9 +41,9 @@ namespace GameNetWorkClient
             lastSentTime = Time.time;
         }
 
-        public void Connect(){
-            tcpClient = new TcpClient("localhost", 8081);
-            udpClient = new UdpClient("localhost", 8080);
+        public void Connect(string host){
+            tcpClient = new TcpClient(host, 8081);
+            udpClient = new UdpClient(host, 8080);
 
 
             Thread readThread = new Thread(new ThreadStart(ReadUDP));
