@@ -22,7 +22,7 @@ jobs:
       uses: fifsky/ssh-action@master
       with:
         command: |
-          systemctl --user restart gameserver
+          sudo systemctl restart gameserver
         host: ${{secrets.HOST}}
         user: haavard_stavnas_markhus_gmail_co
         key: ${{secrets.PRIVATE_KEY}}
