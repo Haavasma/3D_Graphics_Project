@@ -60,6 +60,7 @@ func handleMessage(conn net.Conn, buf [1024]byte, n int) {
 	}
 }
 
+// checks the queue
 func checkQueue() {
 	fmt.Println("checking queue")
 	for {
