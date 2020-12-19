@@ -133,7 +133,8 @@ public class DragToMove : MonoBehaviour
     }
 
     void OnCollisionEnter(Collision collision){
-        if(tag == "DeadPiece"){
+        if(tag == "DeadPiece" || tag == "BottomPiece"){
+            falling = false;
             return;
         }
         if(tag == "MovedByPlayer" && collision.transform.tag == "DeadPiece"){
@@ -146,6 +147,9 @@ public class DragToMove : MonoBehaviour
     }
 
     private void OnTriggerEnter(Collider other) {
+        if(tag == "BottomPiece"){
+            return;
+        }
         if(tag == "DeadPiece" || (!nwController.myTurn && gameController.inGame)){
             tag = "DeadPiece";
             return;

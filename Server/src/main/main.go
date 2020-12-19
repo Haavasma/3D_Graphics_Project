@@ -48,5 +48,7 @@ func main() {
 
 	go udpreader.ReadUDP(udpConn)
 
+	go udpreader.CheckDCs()
+
 	tcpreader.ReadTCP(tcpSocket)
 }

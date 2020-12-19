@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"time"
 
 	"../data"
 )
 
-var channels = data.SafeChannelAddressSlice{V: make(map[string][]*net.UDPAddr)}
+var channels = data.SafeChannelAddressSlice{V: make(map[string][]data.Pair)}
 
 // ReadUDP Function for reading udpMessage on given connection
 func ReadUDP(conn *net.UDPConn) {
@@ -48,15 +49,11 @@ func handleTransform(conn *net.UDPConn, result map[string]interface{}, addr *net
 	if err != nil {
 		fmt.Println("Can't serialize", result)
 	}
-	for _, address := range addressesToSend {
-		if address != addr {
-			conn.WriteTo(bytes, address)
+	for _, addressTimePair := range addressesToSend {
+		if addressTimePair.Address != addr {
+			conn.WriteTo(bytes, addressTimePair.Address)
 		}
 	}
-}
-
-func handleVelocity(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPAddr) {
-
 }
 
 func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPAddr) {
@@ -64,17 +61,38 @@ func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPA
 	if !ok {
 		fmt.Println("could not read channel")
 	}
-	fmt.Println("got ping from user")
 	channels.Mux.Lock()
 	inChannel := false
 	for i := 0; i < len(channels.V[channel]); i++ {
-		if addr.IP.Equal(channels.V[channel][i].IP) && channels.V[channel][i].Port == addr.Port {
+		if addr.IP.Equal(channels.V[channel][i].Address.IP) && channels.V[channel][i].Address.Port == addr.Port {
 			inChannel = true
+			channels.V[channel][i].Timestamp = time.Now().Unix()
 			break
 		}
 	}
 	if !inChannel {
-		channels.V[channel] = append(channels.V[channel], addr)
+		channels.V[channel] = append(channels.V[channel], data.Pair{addr, time.Now().Unix()})
 	}
 	channels.Mux.Unlock()
+}
+
+// CheckDCs checks if more than 20 seconds has passed since last ping from client, if so remove channel
+func CheckDCs() {
+	for {
+		fmt.Println("Checking dcs")
+		channels.Mux.Lock()
+		for channel, addresses := range channels.V {
+			for i := 0; i < len(addresses); i++ {
+				if time.Now().Unix()-addresses[i].Timestamp > 20 {
+					delete(channels.V, channel)
+					break
+				}
+			}
+		}
+		channels.Mux.Unlock()
+
+		fmt.Println(channels.V)
+
+		time.Sleep(20 * time.Second)
+	}
 }

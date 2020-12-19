@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Runtime;
+using System;
 
 
 namespace GameNetWorkClient
@@ -34,6 +34,7 @@ namespace GameNetWorkClient
 
         private static Mutex inGameMutex = new Mutex();
 
+        private Func<int> OnTransform = () => {return -1;}; 
 
         Dictionary<string, FormattedTransform> transforms = new Dictionary<string, FormattedTransform>();
 
@@ -133,28 +134,6 @@ namespace GameNetWorkClient
             endGameThread.Start();
         }
 
-        public string getChannel()
-        {
-            return channel;
-        }
-
-
-        public bool getMyTurn()
-        {
-            return myTurn;
-        }
-
-        public bool InGame()
-        {
-            return channel != "";
-        }
-
-        public int Result()
-        {
-            //returns -1 if not finished, 0 if loss and 1 if win
-            return result;
-        }
-
         private void ReadUDP()
         {
             while (true)
@@ -169,7 +148,7 @@ namespace GameNetWorkClient
                 }
                 catch
                 {
-                    Debug.Log("Could not get message");
+                    //Debug.Log("Could not get message");
                 }
             }
         }
@@ -235,6 +214,7 @@ namespace GameNetWorkClient
                 {
                     mutex.WaitOne();
                     transforms[tf.id] = tf;
+                    OnTransform();
                     mutex.ReleaseMutex();
                 }
             }
@@ -273,76 +253,68 @@ namespace GameNetWorkClient
             endTurnThread.Start();
         }
 
+        public void setOnTransform(Func<int> fun){
+            OnTransform = fun;
+        }
 
-        public Transform GetTransform(Transform tf) {
-            if(transforms.ContainsKey(tf.name))
+
+        public Vector3 GetPosition(Vector3 pos, string id) {
+            if(transforms.ContainsKey(id))
             {
-                tf.transform.position = transforms[tf.name].position;
-                tf.transform.rotation = transforms[tf.name].rotation;
-                tf.transform.localScale = transforms[tf.name].scale;
-                tf.GetComponent<Rigidbody>().velocity = transforms[tf.name].velocity;
+                return transforms[id].position;
             }
-            return tf;
+            return pos;
+        }
+
+        public Quaternion GetRotation(Quaternion rot, string id) {
+            if(transforms.ContainsKey(id))
+            {
+                return transforms[id].rotation;
+            }
+            return rot;
+        }
+
+        public Vector3 GetScale(Vector3 scale, string id) {
+            if(transforms.ContainsKey(id)){
+                return transforms[id].scale;
+            }
+            return scale;
+        }
+
+        public Vector3 GetVelocity(Vector3 vel, string id)
+        {
+            if(transforms.ContainsKey(id)){
+                return transforms[id].velocity;
+            }
+            return vel;
+        }
+
+        public string getChannel()
+        {
+            return channel;
+        }
+
+
+        public bool getMyTurn()
+        {
+            return myTurn;
+        }
+
+        public bool InGame()
+        {
+            return channel != "";
+        }
+
+        public int Result()
+        {
+            //returns -1 if not finished, 0 if loss and 1 if win
+            return result;
         }
 
         private byte[] toBytes(string text)
         {
             return Encoding.UTF8.GetBytes(text);
         }
-
-    }
-}
-
-
-public class Message
-{
-    public string type;
-
-}
-
-public class ChannelMessage : Message {
-    public string channel;
-}
-
-public class NewGame : ChannelMessage
-{
-    public bool myTurn;
-}
-
-public class GameEnd : ChannelMessage
-{
-    public int result;
-}
-
-public class Velocity : Message
-{
-    public string id;
-
-    public Vector3 velocity;
-}
-
-public class FormattedTransform : ChannelMessage
-{
-    public string id;
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 scale;
-
-    public Vector3 velocity;    
-
-    public FormattedTransform(string objectId, string msgType, string _channel, Transform tf)
-    {
-        id = objectId;
-        type = msgType;
-        channel = _channel;
-        position = tf.position;
-        rotation = tf.rotation;
-        scale = tf.localScale;
-        velocity = tf.GetComponent<Rigidbody>().velocity;
-    }
-
-    public FormattedTransform()
-    {
 
     }
 }

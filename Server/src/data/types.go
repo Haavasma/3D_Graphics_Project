@@ -7,7 +7,7 @@ import (
 
 // SafeChannelAddressSlice Thread-safe channel list
 type SafeChannelAddressSlice struct {
-	V   map[string][]*net.UDPAddr
+	V   map[string][]Pair
 	Mux sync.Mutex
 }
 
@@ -15,6 +15,12 @@ type SafeChannelAddressSlice struct {
 type SafeQueue struct {
 	Q   []net.Conn
 	Mux sync.Mutex
+}
+
+// Pair pair
+type Pair struct {
+	Address   *net.UDPAddr
+	Timestamp int64
 }
 
 // SafeChannelTCPConnSlice thread safe channel list of tcp connections
