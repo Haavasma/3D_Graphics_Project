@@ -43,7 +43,6 @@ func handleConnection(conn net.Conn) {
 }
 
 func handleMessage(conn net.Conn, buf [1024]byte, n int) {
-	go checkQueue()
 	var result map[string]interface{}
 
 	json.Unmarshal(buf[0:n], &result)
@@ -60,10 +59,10 @@ func handleMessage(conn net.Conn, buf [1024]byte, n int) {
 	}
 }
 
-// checks the queue
-func checkQueue() {
-	fmt.Println("checking queue")
+// CheckQueue checks the queue
+func CheckQueue() {
 	for {
+		fmt.Println("checking queue")
 		queue.Mux.Lock()
 		for i := 0; i < len(queue.Q); i++ {
 			pingObj := make(map[string]interface{})
@@ -109,8 +108,9 @@ func checkQueue() {
 				}
 			}
 		}
+		fmt.Println(queue.Q)
 		queue.Mux.Unlock()
-		time.Sleep(2 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
 
