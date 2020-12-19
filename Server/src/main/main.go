@@ -50,5 +50,7 @@ func main() {
 
 	go udpreader.CheckDCs()
 
-	tcpreader.ReadTCP(tcpSocket)
+	go tcpreader.ReadTCP(tcpSocket)
+
+	tcpreader.CheckQueue()
 }
