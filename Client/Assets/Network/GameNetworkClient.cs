@@ -20,11 +20,7 @@ namespace GameNetWorkClient
 
         private bool myTurn = false;
 
-        private bool inGame = false;
-
         private int result = -1;
-
-        private float messageCD = 0.01f;
 
         private float lastSentTime;
 
@@ -60,13 +56,11 @@ namespace GameNetWorkClient
                 byte[] jsonUtf8Bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(new FormattedTransform(objectId, "transform", channel, message)));
 
                 udpClient.Send(jsonUtf8Bytes, jsonUtf8Bytes.Length);
-                lastSentTime = Time.time;
             }
             catch
             {
                 Debug.Log("could not send message");
             }
-            //lastSentTime = Time.time;
         }
 
         public void queue()

@@ -105,11 +105,11 @@ public class DragToMove : MonoBehaviour
             return;
         }
         if(pushpullForce != Vector3.zero){
-            float initialmass = rigidbody.mass;
-            rigidbody.mass = 0.1f;
-            rigidbody.AddForce(pushpullForce);
-            pushpullForce *= 1.01f;
-            rigidbody.mass = initialmass;
+            //float initialmass = rigidbody.mass;
+            //rigidbody.mass = 0.1f;
+            rigidbody.velocity = pushpullForce;
+            //pushpullForce *= 1.01f;
+            //rigidbody.mass = initialmass;
             return;
         }
         Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
