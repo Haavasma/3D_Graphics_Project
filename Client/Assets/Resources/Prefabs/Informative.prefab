@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 398283911997977102}
   - component: {fileID: 4189281160622481121}
   - component: {fileID: 2413885125939832216}
+  - component: {fileID: 8104555763733788663}
+  - component: {fileID: -1898873250850937811}
   m_Layer: 5
   m_Name: Informative
   m_TagString: Untagged
@@ -58,14 +60,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8207547, g: 0.14324492, b: 0.14324492, a: 1}
+  m_Color: {r: 0.3019608, g: 0.3254902, b: 0.35686275, a: 1}
   m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: 9aadde45ece12475ea4aac8381197c44, type: 3}
     m_FontSize: 19
     m_FontStyle: 0
     m_BestFit: 0
@@ -78,3 +80,33 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Finding Game
+--- !u!114 &8104555763733788663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8465415025620937025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 510083bd3cf159148a3f695253110f37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  secondsToDespawn: 3
+  fadeOutDuration: 0.5
+--- !u!111 &-1898873250850937811
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8465415025620937025}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Animation: {fileID: 7400000, guid: 860eac6233f89e940b4145038011699b, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: 860eac6233f89e940b4145038011699b, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 0
+  m_AnimatePhysics: 0
+  m_CullingType: 0

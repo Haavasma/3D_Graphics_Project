@@ -19,6 +19,10 @@ public class GameController : MonoBehaviour
 
     [SerializeField] GameObject LoseText;
 
+    [SerializeField] GameObject findingGameText;
+
+    private GameObject fgText;
+
     private Vector3 firstSpawnPoint;
 
     private GameObject cameraFocus;
@@ -33,6 +37,8 @@ public class GameController : MonoBehaviour
 
     private Socket nwController;
 
+    private UIController uIController;
+
     private bool gameEnd = false;
 
     private bool inQueue = false;
@@ -43,7 +49,10 @@ public class GameController : MonoBehaviour
     void Start()
     {
         nwController = GameObject.Find("NetworkController").GetComponent<Socket>();
+        uIController = GameObject.Find("UIController").GetComponent<UIController>();
         UnityEngine.Object pPrefab = Resources.Load("Prefabs/Ground");
+        cameraFocus = GameObject.FindWithTag("CameraFocus");
+        firstSpawnPoint = GameObject.FindWithTag("SpawnPoint").transform.position;
         Ground = (GameObject)GameObject.Instantiate(pPrefab, firstSpawnPoint - new Vector3(0.0f, 0.7f, 0.0f), Quaternion.identity);
         SetUpGame(); 
     }
@@ -69,8 +78,6 @@ public class GameController : MonoBehaviour
     private void SetUpGame(){
         initialPositions = new Dictionary<int, Vector3>();
         cubes = GameObject.FindWithTag("CubeHolder");
-        cameraFocus = GameObject.FindWithTag("CameraFocus");
-        firstSpawnPoint = GameObject.FindWithTag("SpawnPoint").transform.position;
         pieces = new List<GameObject>();
 
         float currMass = Piece.GetComponent<Rigidbody>().mass;
@@ -148,18 +155,26 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void FindGame(){
-        GameObject findGameButton = GameObject.Find("FindGame");
+    public void FindGame(GameObject findGameButton){
         if(findGameButton.GetComponentInChildren<Text>().text == "Find game"){
             findGameButton.GetComponentInChildren<Text>().text = "Cancel";
             nwController.Queue();
             inQueue = true;
-            StartCoroutine(pollGameFound());
+            findingGameText.SetActive(true);
+            StartCoroutine(pollGameFound(findGameButton));
+            StartCoroutine(TextAnimation(findingGameText, new string[3]{"Looking for opponent.", "Looking for opponent..", "Looking for opponent..."}, 0.5f));
         } else {
             findGameButton.GetComponentInChildren<Text>().text = "Find game";
+            Destroy(fgText);
             inQueue = false;
+            findingGameText.SetActive(false);
             nwController.deQueue();
         }
+    }
+
+    public void Practice(GameObject practiceButton)
+    {
+        practiceButton.transform.parent.GetComponent<Animator>().SetBool("Practice", true);
     }
 
     public void ResetPieces(){
@@ -195,6 +210,18 @@ public class GameController : MonoBehaviour
         // play some animation for ending turn or w/e
     }
 
+    public void LeaveGame(){
+        if(!gameEnd){
+            HandleLose();
+        }
+        inGame=false;
+        SetUpGame();
+    }
+
+    public void ExitGame(){
+
+    }
+
     Vector3 CalculateFocusPosition(int pieces, float pieceHeight, Vector3 startPos){
         float height = (pieces/(3*2))*pieceHeight;
         return new Vector3(startPos.x, startPos.y += height, startPos.z);
@@ -215,7 +242,7 @@ public class GameController : MonoBehaviour
         canClickPieces = true;
     }
 
-    IEnumerator pollGameFound(){
+    IEnumerator pollGameFound(GameObject findGameButton){
         while(true){
             Debug.Log("polling");
             if(nwController.InGame()){
@@ -225,18 +252,30 @@ public class GameController : MonoBehaviour
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
                 gamefoundText.GetComponent<Text>().text = "Game found!";
-                GameObject.Find("FindGame").SetActive(false);
-                GameObject.Find("ResetButton").SetActive(false);
                 foreach(GameObject p in pieces){
                     Destroy(p);
                 }
                 SetUpGame();
                 inGame = true;
+                uIController.SetMenusActive(false);
+                findingGameText.SetActive(false);
                 break;
             } else if(!inQueue){
                 break;
             }
             yield return new WaitForSeconds(1);
+        }
+    }
+
+    IEnumerator TextAnimation(GameObject text, string[] states, float intervalTime)
+    {
+        Text textText = text.GetComponent<Text>();
+        int counter = 0;
+        while(text.activeSelf)
+        {
+            textText.text = states[counter%states.Length];
+            counter++;
+            yield return new WaitForSeconds(intervalTime);
         }
     }
 }
