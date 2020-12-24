@@ -14,6 +14,8 @@ public class Socket : MonoBehaviour
 
     private GameController gameController;
 
+    private UIController uIController;
+
     private float startTime;
 
     private float messageCD = 0.2f;
@@ -21,6 +23,8 @@ public class Socket : MonoBehaviour
     public bool myTurn = false;
 
     private bool first = true;
+
+    private bool turnUpdated;
 
 
     void Start()
@@ -34,7 +38,14 @@ public class Socket : MonoBehaviour
         }
         client = new NetworkClient();
         client.Connect("35.228.141.165");
+        client.SetOnTurnChange((bool value) => {
+            turnUpdated = true;
+            myTurn = value;
+            Debug.Log("Turn change ayoooo");
+            return true;
+        });
         gameController = GameObject.Find("GameController").GetComponent<GameController>();
+        uIController = GameObject.Find("UIController").GetComponent<UIController>();
         startTime = Time.time;
     }
 
@@ -43,6 +54,12 @@ public class Socket : MonoBehaviour
     {
         if (gameController.inGame)
         {
+            if(turnUpdated)
+            {
+                uIController.SetTurnText(myTurn);
+                Debug.Log("updating turn: " + myTurn);
+                turnUpdated = false;
+            }
             if (myTurn)
             {
                 if (first)
@@ -63,10 +80,6 @@ public class Socket : MonoBehaviour
             {
                 updateTransforms();
                 first = true;
-            }
-            if (client.getChannel() != "")
-            {
-                myTurn = client.getMyTurn();
             }
         }
     }

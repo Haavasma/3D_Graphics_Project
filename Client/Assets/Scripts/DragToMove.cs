@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
- [RequireComponent(typeof(MeshCollider))]
 public class DragToMove : MonoBehaviour
 {
     private Vector3 screenPoint;
@@ -108,6 +107,7 @@ public class DragToMove : MonoBehaviour
             //float initialmass = rigidbody.mass;
             //rigidbody.mass = 0.1f;
             rigidbody.velocity = pushpullForce;
+            pushpullForce*=1.01f;
             //pushpullForce *= 1.01f;
             //rigidbody.mass = initialmass;
             return;
@@ -139,7 +139,9 @@ public class DragToMove : MonoBehaviour
         }
         if(tag == "MovedByPlayer" && collision.transform.tag == "DeadPiece"){
             EndTurn();
+            return;
         }
+        tag = "Untagged";
         if(Time.time - startTime >= 0.05f) {
             rigidbody.useGravity = true;
             falling = false;
@@ -156,13 +158,12 @@ public class DragToMove : MonoBehaviour
         }
         if(other.gameObject.tag=="Ground")
         {
-            if(tag == "BottomPiece"){
-                return;
-            }
-            else if(tag == "MovedByPlayer"|| tag == "DeadPiece") {
+            Debug.Log("hit gO with tag Ground");
+            if(tag == "MovedByPlayer"|| tag == "DeadPiece") {
                 EndTurn();
             }
-            else if(gameObject.tag!="BottomPiece"){
+            else if(tag=="Untagged"){
+                Debug.Log("sending handleLose");
                 gameController.HandleLose();
             }
         }
@@ -183,6 +184,6 @@ public class DragToMove : MonoBehaviour
     }
 
     private bool checkIfClickable(){
-        return (clickable && !falling && (gameController.canClickPieces || !gameController.inGame));
+        return (clickable && !falling && (gameController.canClickPieces));
     }
 }

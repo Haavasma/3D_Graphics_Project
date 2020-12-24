@@ -26,11 +26,14 @@ namespace GameNetWorkClient
 
         private static Mutex mutex = new Mutex();
 
+
         private static Mutex channelMutex = new Mutex();
 
         private static Mutex inGameMutex = new Mutex();
 
         private Func<int> OnTransform = () => {return -1;}; 
+
+        private Func<bool, bool> OnTurnChange = (bool value) => {return false;};
 
         Dictionary<string, FormattedTransform> transforms = new Dictionary<string, FormattedTransform>();
 
@@ -65,6 +68,7 @@ namespace GameNetWorkClient
 
         public void queue()
         {
+            result = -1;
             Thread queueThread = new Thread(new ThreadStart(() =>
             {
                 try
@@ -119,6 +123,7 @@ namespace GameNetWorkClient
 
                     tcpClient.GetStream().Write(jsonUtf8Bytes, 0, jsonUtf8Bytes.Length);
                     Debug.Log("sending tcp package for end game");
+                    HandleEndGame();
                 }
                 catch
                 {
@@ -197,6 +202,7 @@ namespace GameNetWorkClient
                 channelMutex.WaitOne();
                 channel = game.channel;
                 myTurn = game.myTurn;
+                OnTurnChange(myTurn);
                 channelMutex.ReleaseMutex();
                 Thread pingChannelThread = new Thread(new ThreadStart(PingChannel));
                 pingChannelThread.Start();
@@ -215,6 +221,7 @@ namespace GameNetWorkClient
             else if (temp.type == "toggleTurn")
             {
                 myTurn = !myTurn;
+                OnTurnChange(myTurn);
             }
             else if(temp.type == "EndGame")
             {
@@ -222,13 +229,18 @@ namespace GameNetWorkClient
                 Debug.Log(message);
                 result = g.result;
                 Debug.Log(g.result);
-                channelMutex.WaitOne();
-                channel = "";
-                channelMutex.ReleaseMutex();
-                mutex.WaitOne();
-                transforms = new Dictionary<string, FormattedTransform>();
-                mutex.ReleaseMutex();
+                HandleEndGame();
             }
+        }
+
+        private void HandleEndGame()
+        {
+            channelMutex.WaitOne();
+            channel = "";
+            channelMutex.ReleaseMutex();
+            mutex.WaitOne();
+            transforms = new Dictionary<string, FormattedTransform>();
+            mutex.ReleaseMutex();
         }
         
         public void EndTurn() {
@@ -251,6 +263,10 @@ namespace GameNetWorkClient
             OnTransform = fun;
         }
 
+        public void SetOnTurnChange(Func<bool, bool> fun)
+        {
+            OnTurnChange = fun;
+        }
 
         public Vector3 GetPosition(Vector3 pos, string id) {
             if(transforms.ContainsKey(id))

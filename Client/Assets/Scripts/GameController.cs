@@ -11,15 +11,15 @@ public class GameController : MonoBehaviour
 
     public GameObject Stabilizer;
 
-    public bool canClickPieces = true;
+    public bool canClickPieces = false;
 
     [SerializeField] int amountOfPieces = 54;
 
-    [SerializeField] GameObject WinText;
-
-    [SerializeField] GameObject LoseText;
+    [SerializeField] GameObject ResultText;
 
     [SerializeField] GameObject findingGameText;
+
+    GameObject LeaveGameButton;
 
     private GameObject fgText;
 
@@ -39,6 +39,8 @@ public class GameController : MonoBehaviour
 
     private UIController uIController;
 
+    private roamCamera roamCam;
+
     private bool gameEnd = false;
 
     private bool inQueue = false;
@@ -48,9 +50,12 @@ public class GameController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        LeaveGameButton = GameObject.Find("LeaveGame");
+        LeaveGameButton.SetActive(false);
         nwController = GameObject.Find("NetworkController").GetComponent<Socket>();
         uIController = GameObject.Find("UIController").GetComponent<UIController>();
         UnityEngine.Object pPrefab = Resources.Load("Prefabs/Ground");
+        roamCam = GameObject.Find("Camera").GetComponent<roamCamera>();
         cameraFocus = GameObject.FindWithTag("CameraFocus");
         firstSpawnPoint = GameObject.FindWithTag("SpawnPoint").transform.position;
         Ground = (GameObject)GameObject.Instantiate(pPrefab, firstSpawnPoint - new Vector3(0.0f, 0.7f, 0.0f), Quaternion.identity);
@@ -60,6 +65,9 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(inGame && Input.GetKeyDown(KeyCode.Escape)){
+            uIController.toggleInGameMenu();
+        }
         if(initialPositions.Keys.Count != amountOfPieces && pieces.TrueForAll((GameObject p)=>{return !p.GetComponent<DragToMove>().falling;})){
             Debug.Log("YOYOYO");
             pieces.ForEach((GameObject p) => {
@@ -70,7 +78,7 @@ public class GameController : MonoBehaviour
                     p.GetComponent<DragToMove>().SetClickable(true);
                 }
             });
-        } else if(nwController.GetResult() == 1){ 
+        } else if(nwController.GetResult() == 1 && inGame){ 
             HandleWin();
         }
     }
@@ -130,28 +138,41 @@ public class GameController : MonoBehaviour
         }
     }
 
+    private void HandleGameEnd()
+    {
+        ResultText.SetActive(true);
+        gameEnd = true;
+        inGame = false;
+        uIController.SetTurnTextActive(false);
+        LeaveGameButton.SetActive(true);
+    }
+
     public void HandleLose(){
         if(!nwController.myTurn || !inGame){
+            Debug.Log("skipping lose cos not myturn or not ingame");
             return;
         }else if(!gameEnd) {
-            Debug.Log("YOU LOSE");
-            pieces.ForEach((GameObject p) => {
-                p.GetComponent<DragToMove>().SetClickable(false);
-            });
-            nwController.EndGame();
-            LoseText.SetActive(true);
-            //play some loss animation
-            gameEnd = true;
-            inGame = false;
+            Debug.Log("losing");
+            Lose();
         }
+    }
+
+    private void Lose()
+    {
+        Debug.Log("YOU LOSE");
+        pieces.ForEach((GameObject p) => {
+            p.GetComponent<DragToMove>().SetClickable(false);
+        });
+        nwController.EndGame();
+        ResultText.GetComponent<Text>().text = "YOU LOSE";
+        HandleGameEnd();
     }
 
     public void HandleWin(){
         if(!gameEnd){
             Debug.Log("YOU WIN");
-            WinText.SetActive(true);
-            gameEnd = true;
-            inGame = false;
+            ResultText.GetComponent<Text>().text = "YOU WIN";
+            HandleGameEnd();
         }
     }
 
@@ -212,14 +233,24 @@ public class GameController : MonoBehaviour
 
     public void LeaveGame(){
         if(!gameEnd){
-            HandleLose();
+            Lose();
         }
-        inGame=false;
-        SetUpGame();
+        Debug.Log("Leaving game");
+        ResultText.SetActive(false);
+        uIController.SetInGameMenuActive(false);
+        uIController.SetMenusActive(true);
+        SetUp();
+        Debug.Log("setting gameEnd to false");
+        gameEnd = false;
     }
 
-    public void ExitGame(){
-
+    private void SetUp()
+    {
+        foreach(GameObject p in pieces)
+        {
+            Destroy(p);
+        }
+        SetUpGame();
     }
 
     Vector3 CalculateFocusPosition(int pieces, float pieceHeight, Vector3 startPos){
@@ -246,18 +277,17 @@ public class GameController : MonoBehaviour
         while(true){
             Debug.Log("polling");
             if(nwController.InGame()){
-                GameObject gamefoundText = Instantiate((GameObject)Resources.Load("Prefabs/Informative"), Vector3.zero, Quaternion.identity);
-                gamefoundText.transform.parent = GameObject.Find("Canvas").transform;
-                RectTransform rt = gamefoundText.GetComponent<RectTransform>();
-                rt.offsetMin = Vector2.zero;
-                rt.offsetMax = Vector2.zero;
-                gamefoundText.GetComponent<Text>().text = "Game found!";
-                foreach(GameObject p in pieces){
+                findGameButton.GetComponentInChildren<Text>().text = "Find game";
+                foreach(GameObject p in pieces)
+                {
                     Destroy(p);
                 }
                 SetUpGame();
                 inGame = true;
                 uIController.SetMenusActive(false);
+                roamCam.StopRoam();
+                canClickPieces = true;
+                uIController.SetTurnTextActive(true);
                 findingGameText.SetActive(false);
                 break;
             } else if(!inQueue){
