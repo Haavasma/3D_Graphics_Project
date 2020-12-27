@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class DragToMove : MonoBehaviour
 {
@@ -19,6 +20,8 @@ public class DragToMove : MonoBehaviour
 
     public bool falling = true;
 
+    public AudioClip[] collisions;
+
     private bool clickable = false;
 
     private GameObject PieceHolder;
@@ -27,9 +30,13 @@ public class DragToMove : MonoBehaviour
 
     private GameController gameController;
 
+    private UIController uIController;
+
     private Vector3 initialpos;
 
     private Vector3 pushpullForce;
+
+    private AudioSource audioSource;
 
     [SerializeField] float fallSpeed = 0.01f;
 
@@ -45,10 +52,12 @@ public class DragToMove : MonoBehaviour
         PieceHolder = GameObject.Find("PieceHolder");
         nwController = GameObject.Find("NetworkController").GetComponent<Socket>();
         gameController = GameObject.Find("GameController").GetComponent<GameController>();
+        uIController = GameObject.Find("UIController").GetComponent<UIController>();
         rigidbody = GetComponent<Rigidbody>();
         collider = GetComponent<Collider>();
         startDynFriction = collider.material.dynamicFriction;
         startStaticFriction = collider.material.staticFriction;
+        audioSource = GetComponent<AudioSource>();
     }
 
     void FixedUpdate() {
@@ -59,13 +68,13 @@ public class DragToMove : MonoBehaviour
     }
 
     private void OnMouseEnter() {
-        if(!Input.GetMouseButton(0)){
+        if(!Input.GetMouseButton(0) && checkIfClickable()){
             GetComponent<cakeslice.Outline>().enabled = true;
         }
     }
 
     private void OnMouseExit() {
-        if(!Input.GetMouseButton(0))
+        if(!Input.GetMouseButton(0) && checkIfClickable())
         {
             GetComponent<cakeslice.Outline>().enabled = false;
         }
@@ -73,14 +82,16 @@ public class DragToMove : MonoBehaviour
 
     void OnMouseDown()
     {
-        GetComponent<cakeslice.Outline>().color = 1;
         Debug.Log("clicked " + name);
         if(!checkIfClickable()){
             Debug.Log("not clickable");
             return;
         }
+        GetComponent<cakeslice.Outline>().color = 1;
 
         screenPoint = Camera.main.WorldToScreenPoint(gameObject.transform.position);
+
+        uIController.SetDragCursor();
 
         initialpos = transform.position;
 
@@ -126,6 +137,7 @@ public class DragToMove : MonoBehaviour
         if(!clickable || falling || !gameController.canClickPieces){
             return;
         }
+        uIController.SetPointCursor();
         rigidbody.useGravity = true;
         collider.material.dynamicFriction = startDynFriction;
         collider.material.staticFriction = startStaticFriction;
@@ -133,6 +145,12 @@ public class DragToMove : MonoBehaviour
     }
 
     void OnCollisionEnter(Collision collision){
+        if (collision.relativeVelocity.magnitude > 2)
+        {
+            System.Random random = new System.Random();
+            audioSource.volume = collision.relativeVelocity.magnitude / 20.0f;
+            audioSource.PlayOneShot(collisions[random.Next(collisions.Length)]);
+        }
         if(tag == "DeadPiece" || tag == "BottomPiece"){
             falling = false;
             return;
@@ -184,6 +202,6 @@ public class DragToMove : MonoBehaviour
     }
 
     private bool checkIfClickable(){
-        return (clickable && !falling && (gameController.canClickPieces));
+        return (clickable && !falling && (gameController.canClickPieces) && (!gameController.inGame || nwController.myTurn));
     }
 }

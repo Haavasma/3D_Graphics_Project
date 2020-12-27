@@ -47,7 +47,9 @@ public class GameController : MonoBehaviour
 
     public bool inGame = false;
 
-    // Start is called before the first frame update
+    void Awake()
+    {
+    }
     void Start()
     {
         LeaveGameButton = GameObject.Find("LeaveGame");
