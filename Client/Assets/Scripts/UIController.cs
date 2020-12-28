@@ -23,11 +23,15 @@ public class UIController : MonoBehaviour
 
     private Texture2D dragCursor;
 
+    private Texture2D handCursor;
+
     private AudioSource audioSource;
 
     private AudioClip highlightClick;
 
     private AudioClip click;
+
+    private AudioClip woosh;
 
     private int amountOfMenuButtons;
 
@@ -40,7 +44,8 @@ public class UIController : MonoBehaviour
     private float main_menu_btn_height = 0.1f;
     // Start is called before the first frame update
     void Start()
-    {
+    {    
+        SetUpPlayerPrefs();
         PracticeMenu = GameObject.Find("PracticeMenu");
         gameController = GameObject.Find("GameController").GetComponent<GameController>();
         mainMenu = GameObject.Find("MainMenu");
@@ -54,7 +59,7 @@ public class UIController : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         highlightClick = (AudioClip)Resources.Load("Sound/UI/Highlight_click");
         click = (AudioClip)Resources.Load("Sound/UI/Click");
-
+        woosh = (AudioClip)Resources.Load("Sound/SFX/Woosh_1");
         SetUpMenu(mainMenu);
         SetUpMenu(InGameMenu);
         SetUpCursors();
@@ -78,24 +83,40 @@ public class UIController : MonoBehaviour
     {
         pointCursor = (Texture2D)Resources.Load("Cursors/Point");
         dragCursor = (Texture2D)Resources.Load("Cursors/Drag");
-        Cursor.SetCursor(pointCursor, new Vector3(40f, 0.0f, 0.0f), CursorMode.Auto);
+        handCursor = (Texture2D)Resources.Load("Cursors/Hand");
+        Cursor.SetCursor(handCursor, new Vector3(40f, 0.0f, 0.0f), CursorMode.Auto);
     }
 
+    private void SetUpPlayerPrefs()
+    {
+        string[] keys = {"SoundEffectVol", "MasterVol", "MusicVol"}; 
+
+        foreach(string key in keys)
+        {
+            float value = PlayerPrefs.GetFloat(key);
+            mixer.SetFloat(key, value);
+            Debug.Log(GameObject.FindGameObjectWithTag(key).GetComponent<Slider>().value);
+            GameObject.FindGameObjectWithTag(key).GetComponent<Slider>().value = value;
+        }
+    }
     public void SetSFXlvl(float lvl)
     {
         Debug.Log("setting sfx to " + lvl);
         mixer.SetFloat("SoundEffectVol", lvl);
+        PlayerPrefs.SetFloat("SoundEffectVol", lvl);
     }
 
     public void SetMasterlvl(float lvl)
     {
         Debug.Log("setting master level to " + lvl);
         mixer.SetFloat("MasterVol", lvl);
+        PlayerPrefs.SetFloat("MasterVol", lvl);
     }
 
     public void SetMusiclvl(float lvl)
     {
         mixer.SetFloat("MusicVol", lvl);
+        PlayerPrefs.SetFloat("MusicVol", lvl);
     }
     public void SetDragCursor()
     {
@@ -107,8 +128,14 @@ public class UIController : MonoBehaviour
         Cursor.SetCursor(pointCursor, new Vector3(40f, 0.0f, 0.0f), CursorMode.Auto);
     }
 
+    public void SetHandCursor()
+    {
+        Cursor.SetCursor(handCursor, new Vector3(100f, 0.0f, 0.0f), CursorMode.Auto);
+    }
+
     public void PlayHighlightSound()
     {
+        SetPointCursor();
         audioSource.PlayOneShot(highlightClick);
     }
 
@@ -150,6 +177,7 @@ public class UIController : MonoBehaviour
         {
             turnText.GetComponent<Text>().text = "YOUR TURN";
             turnText.GetComponent<Animation>().Play();
+            audioSource.PlayOneShot(woosh);
         } else 
         {
             turnText.GetComponent<Text>().text = "THEIR TURN";

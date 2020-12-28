@@ -137,7 +137,7 @@ public class DragToMove : MonoBehaviour
         if(!clickable || falling || !gameController.canClickPieces){
             return;
         }
-        uIController.SetPointCursor();
+        uIController.SetHandCursor();
         rigidbody.useGravity = true;
         collider.material.dynamicFriction = startDynFriction;
         collider.material.staticFriction = startStaticFriction;
@@ -148,7 +148,9 @@ public class DragToMove : MonoBehaviour
         if (collision.relativeVelocity.magnitude > 2)
         {
             System.Random random = new System.Random();
-            audioSource.volume = collision.relativeVelocity.magnitude / 20.0f;
+            float volume = 0.05f + collision.relativeVelocity.magnitude / 50.0f;
+            Debug.Log("volume: " + volume);
+            audioSource.volume =  volume >= 0.5f ? 0.5f : volume;
             audioSource.PlayOneShot(collisions[random.Next(collisions.Length)]);
         }
         if(tag == "DeadPiece" || tag == "BottomPiece"){

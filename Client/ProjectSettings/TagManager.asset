@@ -12,6 +12,9 @@ TagManager:
   - SpawnPoint
   - MovedByPlayer
   - DeadPiece
+  - SoundEffectVol
+  - MasterVol
+  - MusicVol
   layers:
   - Default
   - TransparentFX

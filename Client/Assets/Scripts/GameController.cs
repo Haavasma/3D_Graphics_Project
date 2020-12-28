@@ -23,6 +23,14 @@ public class GameController : MonoBehaviour
 
     private GameObject fgText;
 
+    private AudioSource audioSource;
+
+    private AudioClip ding;
+
+    private AudioClip success;
+
+    private AudioClip clock;
+
     private Vector3 firstSpawnPoint;
 
     private GameObject cameraFocus;
@@ -61,6 +69,10 @@ public class GameController : MonoBehaviour
         cameraFocus = GameObject.FindWithTag("CameraFocus");
         firstSpawnPoint = GameObject.FindWithTag("SpawnPoint").transform.position;
         Ground = (GameObject)GameObject.Instantiate(pPrefab, firstSpawnPoint - new Vector3(0.0f, 0.7f, 0.0f), Quaternion.identity);
+        clock = (AudioClip)Resources.Load("Sound/SFX/clock");
+        ding = (AudioClip)Resources.Load("Sound/SFX/ding");
+        success = (AudioClip)Resources.Load("Sound/SFX/success");
+        audioSource = GetComponent<AudioSource>();
         SetUpGame(); 
     }
 
@@ -224,6 +236,7 @@ public class GameController : MonoBehaviour
     }
 
     public void EndTurn(){
+        audioSource.PlayOneShot(ding);
         if(!inGame || !nwController.myTurn){
             return;
         }        
@@ -270,7 +283,10 @@ public class GameController : MonoBehaviour
     }
 
     IEnumerator EndTurnAfterSeconds(int seconds){
+        audioSource.PlayOneShot(clock);
         yield return new WaitForSeconds(seconds);
+        audioSource.Stop();
+        audioSource.PlayOneShot(success);
         nwController.EndTurn();
         canClickPieces = true;
     }
