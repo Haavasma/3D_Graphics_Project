@@ -31,11 +31,11 @@ public class Tutorial : MonoBehaviour
 
     void Start()
     {
-        /*if(PlayerPrefs.GetInt("Tutorial") == -1)
+        if(PlayerPrefs.GetInt("Tutorial") == -1)
         {
             Destroy(gameObject);
+            return;
         }
-        */
         gameController = GameObject.Find("GameController").GetComponent<GameController>();
         gameController.SetCanClickPieces(false);
         animator = GetComponent<Animator>();
@@ -100,7 +100,7 @@ public class Tutorial : MonoBehaviour
                 if(gameController.GetPiecesDropped()>0)
                 {
                     nextStep();
-                    tutorialText.text = "Use <sprite=2> + <sprite=3> to push a piece";
+                    tutorialText.text = "Use <sprite=2> + <sprite=1> to push a piece";
                 }
                 break;
             case 4: // push piece
@@ -131,7 +131,7 @@ public class Tutorial : MonoBehaviour
             case 6:
                 Pointer.transform.position = Vector3.MoveTowards(Pointer.transform.position, 
                                                                 goBackButton.transform.position + new Vector3(0.0f, -20.0f, 0.0f),
-                                                                200f * Time.deltaTime);   
+                                                                400f * Time.deltaTime);   
                 
                 Debug.Log(gameController.GetInPractice());
                 if(!gameController.GetInPractice())

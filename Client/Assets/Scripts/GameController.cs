@@ -284,6 +284,7 @@ public class GameController : MonoBehaviour
         ResultText.SetActive(false);
         uIController.SetInGameMenuActive(false);
         uIController.SetMenusActive(true);
+        uIController.SetPractice(false);
         SetUp();
         Debug.Log("setting gameEnd to false");
         gameEnd = false;

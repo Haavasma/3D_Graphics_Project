@@ -18,8 +18,6 @@ public class DragToMove : MonoBehaviour
 
     private float startTime;
 
-    private float initialMass;
-
     public bool falling = true;
 
     public AudioClip[] collisions;
@@ -102,7 +100,6 @@ public class DragToMove : MonoBehaviour
         collider.material.dynamicFriction = onTouchFriction;
         collider.material.staticFriction = onTouchFriction;
         pushpullForce = Vector3.zero;
-        initialMass = rigidbody.mass;
         if(Input.GetKey(KeyCode.LeftShift)){
             initialMousePos = Input.mousePosition;
             pushpullForce = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z + 1f)) - offset;
@@ -138,7 +135,6 @@ public class DragToMove : MonoBehaviour
         cakeslice.Outline script = GetComponent<cakeslice.Outline>();
         script.color = 2;
         script.enabled = false;
-        rigidbody.mass = initialMass;
 
         pushpullForce = Vector3.zero;
         if(!clickable || falling || !gameController.GetCanClickPieces()){
