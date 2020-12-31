@@ -11,7 +11,9 @@ public class GameController : MonoBehaviour
 
     public GameObject Stabilizer;
 
-    public bool canClickPieces = false;
+    private bool canClickPieces = false;
+
+    private bool inPractice = false;
 
     [SerializeField] int amountOfPieces = 54;
 
@@ -49,9 +51,13 @@ public class GameController : MonoBehaviour
 
     private roamCamera roamCam;
 
+    private int piecesDropped = 0;
+
     private bool gameEnd = false;
 
     private bool inQueue = false;
+
+    private bool gameLost = false;
 
     public bool inGame = false;
 
@@ -162,13 +168,15 @@ public class GameController : MonoBehaviour
     }
 
     public void HandleLose(){
-        if(!nwController.myTurn || !inGame){
+        if((!nwController.myTurn || !inGame) && !gameLost){
+            gameLost = true;
             Debug.Log("skipping lose cos not myturn or not ingame");
             return;
-        }else if(!gameEnd) {
+        }else if(!gameEnd && inGame && nwController.myTurn) {
             Debug.Log("losing");
             Lose();
         }
+        //Play losing sound;
     }
 
     private void Lose()
@@ -207,13 +215,34 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void Practice(GameObject practiceButton)
+    public void SetPractice(bool value)
     {
-        practiceButton.transform.parent.GetComponent<Animator>().SetBool("Practice", true);
+        inPractice = value;
+    }
+
+    public void SetCanClickPieces(bool value)
+    {
+        canClickPieces = value;
+        if(!value)
+        {
+            inPractice = false;
+        }
+    }
+
+    public bool GetCanClickPieces()
+    {
+        return canClickPieces;
+    }
+
+    public bool GetInPractice()
+    {
+        return inPractice;
     }
 
     public void ResetPieces(){
+        gameLost = false;
         if(initialPositions.Keys.Count==pieces.Count && !inGame){
+            piecesDropped = 0;
             Debug.Log("setting positions");
             pieces.ForEach((GameObject p) => {
                 int pieceNo = int.Parse(p.name);
@@ -237,6 +266,7 @@ public class GameController : MonoBehaviour
 
     public void EndTurn(){
         audioSource.PlayOneShot(ding);
+        piecesDropped++;
         if(!inGame || !nwController.myTurn){
             return;
         }        
@@ -259,13 +289,23 @@ public class GameController : MonoBehaviour
         gameEnd = false;
     }
 
-    private void SetUp()
+    public void SetUp()
     {
         foreach(GameObject p in pieces)
         {
             Destroy(p);
         }
         SetUpGame();
+    }
+
+    public int GetPiecesDropped()
+    {
+        return piecesDropped;
+    }
+
+    public bool GetGameLost()
+    {
+        return gameLost;
     }
 
     Vector3 CalculateFocusPosition(int pieces, float pieceHeight, Vector3 startPos){

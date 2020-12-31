@@ -147,7 +147,8 @@ public class UIController : MonoBehaviour
     public void SetPractice(bool value){
         mainMenu.GetComponent<Animator>().SetBool("Practice", value);
         PracticeMenu.SetActive(value);
-        gameController.canClickPieces = value;
+        gameController.SetCanClickPieces(value);
+        gameController.SetPractice(value);
     }
 
     public void SetMenusActive(bool value)
@@ -158,7 +159,7 @@ public class UIController : MonoBehaviour
         {
             PracticeMenu.SetActive(value);
             mainMenu.GetComponent<Animator>().SetBool("Practice", value);
-            gameController.canClickPieces = value;
+            gameController.SetCanClickPieces(value);
         }
     }
 

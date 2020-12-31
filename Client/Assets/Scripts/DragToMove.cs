@@ -18,9 +18,13 @@ public class DragToMove : MonoBehaviour
 
     private float startTime;
 
+    private float initialMass;
+
     public bool falling = true;
 
     public AudioClip[] collisions;
+
+    private Vector3 initialMousePos;
 
     private bool clickable = false;
 
@@ -91,8 +95,6 @@ public class DragToMove : MonoBehaviour
 
         screenPoint = Camera.main.WorldToScreenPoint(gameObject.transform.position);
 
-        uIController.SetDragCursor();
-
         initialpos = transform.position;
 
         //offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
@@ -100,12 +102,18 @@ public class DragToMove : MonoBehaviour
         collider.material.dynamicFriction = onTouchFriction;
         collider.material.staticFriction = onTouchFriction;
         pushpullForce = Vector3.zero;
-        if(Input.GetKey(KeyCode.LeftControl)){
-            pushpullForce = -Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z + 1f)) + offset;
-        } else if(Input.GetKey(KeyCode.LeftShift)){
+        initialMass = rigidbody.mass;
+        if(Input.GetKey(KeyCode.LeftShift)){
+            initialMousePos = Input.mousePosition;
             pushpullForce = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z + 1f)) - offset;
-        } else {
-            //rigidbody.useGravity= false;
+
+            rigidbody.AddForce(pushpullForce*200.0f * rigidbody.mass);
+            pushpullForce = pushpullForce*1000.0f * rigidbody.mass;
+            uIController.SetPointCursor();
+        }
+        else
+        {
+            uIController.SetDragCursor();
         }
     }
 
@@ -114,13 +122,11 @@ public class DragToMove : MonoBehaviour
         if(!checkIfClickable()){
             return;
         }
-        if(pushpullForce != Vector3.zero){
-            //float initialmass = rigidbody.mass;
-            //rigidbody.mass = 0.1f;
-            rigidbody.velocity = pushpullForce;
-            pushpullForce*=1.01f;
-            //pushpullForce *= 1.01f;
-            //rigidbody.mass = initialmass;
+        if(pushpullForce != Vector3.zero /*&& Input.GetKey(KeyCode.LeftShift)*/){
+             //rigidbody.velocity = Camera.main.ScreenToWorldPoint(new Vector3(initialMousePos.x, initialMousePos.y, 
+            //screenPoint.z + ((Input.mousePosition.y - initialMousePos.y) - (initialpos.z - transform.position.z))) - offset) * 0.02f;
+            rigidbody.AddForce(pushpullForce*Time.deltaTime);
+            pushpullForce *= 1 + Time.deltaTime;
             return;
         }
         Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
@@ -132,9 +138,10 @@ public class DragToMove : MonoBehaviour
         cakeslice.Outline script = GetComponent<cakeslice.Outline>();
         script.color = 2;
         script.enabled = false;
+        rigidbody.mass = initialMass;
 
         pushpullForce = Vector3.zero;
-        if(!clickable || falling || !gameController.canClickPieces){
+        if(!clickable || falling || !gameController.GetCanClickPieces()){
             return;
         }
         uIController.SetHandCursor();
@@ -204,6 +211,6 @@ public class DragToMove : MonoBehaviour
     }
 
     private bool checkIfClickable(){
-        return (clickable && !falling && (gameController.canClickPieces) && (!gameController.inGame || nwController.myTurn));
+        return (clickable && !falling && (gameController.GetCanClickPieces()) && (!gameController.inGame || nwController.myTurn));
     }
 }
