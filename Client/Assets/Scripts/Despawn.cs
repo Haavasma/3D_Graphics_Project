@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// script that despawns the gameobject it is attached to after the given seconds
 public class Despawn : MonoBehaviour
 {
     [SerializeField] float secondsToDespawn = 3.0f;
@@ -26,7 +27,7 @@ public class Despawn : MonoBehaviour
             text.CrossFadeAlpha(0, fadeOutDuration*0.5f, false);
         }
     }
-
+    // Destroys the gameobject after given seconds
     IEnumerator DespawnAfterSec(float seconds){
         yield return new WaitForSeconds(seconds);
         fadeOut = true;

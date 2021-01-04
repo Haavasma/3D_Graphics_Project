@@ -24,6 +24,7 @@ func ReadUDP(conn *net.UDPConn) {
 	}
 }
 
+// handles an incoming udp message
 func handleMessage(conn *net.UDPConn, buf [1024]byte, n int, addr *net.UDPAddr) {
 	var result map[string]interface{}
 
@@ -37,6 +38,7 @@ func handleMessage(conn *net.UDPConn, buf [1024]byte, n int, addr *net.UDPAddr) 
 	}
 }
 
+// handles message of type transform
 func handleTransform(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPAddr) {
 	channel, ok := result["channel"].(string)
 	if !ok {
@@ -56,11 +58,13 @@ func handleTransform(conn *net.UDPConn, result map[string]interface{}, addr *net
 	}
 }
 
+// handles message of type ping
 func handlePing(conn *net.UDPConn, result map[string]interface{}, addr *net.UDPAddr) {
 	channel, ok := result["channel"].(string)
 	if !ok {
 		fmt.Println("could not read channel")
 	}
+	// adds address to channel if not already in the channel
 	channels.Mux.Lock()
 	inChannel := false
 	for i := 0; i < len(channels.V[channel]); i++ {

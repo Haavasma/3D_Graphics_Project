@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+// script that controls the movement of the gameobject based on user input
 public class DragToMove : MonoBehaviour
 {
     private Vector3 screenPoint;
@@ -50,6 +51,7 @@ public class DragToMove : MonoBehaviour
         startTime = Time.time;
     }
 
+    // fetches variables needed from the scene
     void Start() {
         PieceHolder = GameObject.Find("PieceHolder");
         nwController = GameObject.Find("NetworkController").GetComponent<Socket>();
@@ -62,34 +64,37 @@ public class DragToMove : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
     }
 
+    // Keeps the piece falling slowly for steady tower setup
     void FixedUpdate() {
         if(falling && (nwController.myTurn || !gameController.inGame)) {
             rigidbody.MovePosition(new Vector3(transform.position.x, transform.position.y - fallSpeed, transform.position.z));
         }
         //gameObject.AddComponent<HingeJoint>();
     }
-
+    // highlights the piece if clickable when mouse enters gameobject
     private void OnMouseEnter() {
         if(!Input.GetMouseButton(0) && checkIfClickable()){
             GetComponent<cakeslice.Outline>().enabled = true;
+            uIController.PlayHighlightSound();
         }
     }
-
+    // removes highlight when mouse exits the gameobject
     private void OnMouseExit() {
-        if(!Input.GetMouseButton(0) && checkIfClickable())
+        if(!Input.GetMouseButton(0))
         {
             GetComponent<cakeslice.Outline>().enabled = false;
         }
     }
 
+    // Adds forces and saves vectors used for drag to move mechanic when mouse is clicked down
     void OnMouseDown()
     {
-        Debug.Log("clicked " + name);
         if(!checkIfClickable()){
-            Debug.Log("not clickable");
             return;
         }
         GetComponent<cakeslice.Outline>().color = 1;
+
+        uIController.PlayClickSound();
 
         screenPoint = Camera.main.WorldToScreenPoint(gameObject.transform.position);
 
@@ -114,11 +119,13 @@ public class DragToMove : MonoBehaviour
         }
     }
 
+    // Drags the gameobject toward the mouse. If left shift is held, a pushing force is added to the gameobject
     void OnMouseDrag()
     {
         if(!checkIfClickable()){
             return;
         }
+        tag = "MovedByPlayer";
         if(pushpullForce != Vector3.zero /*&& Input.GetKey(KeyCode.LeftShift)*/){
              //rigidbody.velocity = Camera.main.ScreenToWorldPoint(new Vector3(initialMousePos.x, initialMousePos.y, 
             //screenPoint.z + ((Input.mousePosition.y - initialMousePos.y) - (initialpos.z - transform.position.z))) - offset) * 0.02f;
@@ -130,16 +137,17 @@ public class DragToMove : MonoBehaviour
         Vector3 mousePosOffset = Camera.main.ScreenToWorldPoint(curScreenPoint) - offset;
         rigidbody.velocity = (initialpos + mousePosOffset - transform.position) * 500f * Time.deltaTime;
     }
-
+    
+    // resets variable values and removes highlight when mouse button is released after clicking the gameobject
     void OnMouseUp() {
+        if(!checkIfClickable()){
+            return;
+        }
         cakeslice.Outline script = GetComponent<cakeslice.Outline>();
         script.color = 2;
         script.enabled = false;
 
         pushpullForce = Vector3.zero;
-        if(!clickable || falling || !gameController.GetCanClickPieces()){
-            return;
-        }
         uIController.SetHandCursor();
         rigidbody.useGravity = true;
         collider.material.dynamicFriction = startDynFriction;
@@ -147,7 +155,10 @@ public class DragToMove : MonoBehaviour
         tag = "MovedByPlayer";
     }
 
+    // Called when the gameobject collides
     void OnCollisionEnter(Collision collision){
+
+        // Play sound if collision has high enough velocity
         if (collision.relativeVelocity.magnitude > 2)
         {
             System.Random random = new System.Random();
@@ -156,33 +167,40 @@ public class DragToMove : MonoBehaviour
             audioSource.volume =  volume >= 0.5f ? 0.5f : volume;
             audioSource.PlayOneShot(collisions[random.Next(collisions.Length)]);
         }
+        // turns of falling if gameobject is dead or is a bottom piece
         if(tag == "DeadPiece" || tag == "BottomPiece"){
             falling = false;
             return;
         }
+        // Ends turn if a piece moved by player collides with a dead piece
         if(tag == "MovedByPlayer" && collision.transform.tag == "DeadPiece"){
             EndTurn();
             return;
         }
+        // resets tag
         tag = "Untagged";
+        // Turns on gravity and sets falling to false if 0.05s has passed since spawn
         if(Time.time - startTime >= 0.05f) {
             rigidbody.useGravity = true;
             falling = false;
         }
     }
 
+    // Called as the gameobject enters a trigger
     private void OnTriggerEnter(Collider other) {
         if(tag == "BottomPiece"){
             return;
         }
+        // return if ingame and not the user's turn or if the piece entering a trigger is dead.
         if(tag == "DeadPiece" || (!nwController.myTurn && gameController.inGame)){
             tag = "DeadPiece";
             return;
         }
+        // Ends turn if gameobject entering ground-trigger is moved by player, tells the gamecontroller to lose if piece was not moved by player
         if(other.gameObject.tag=="Ground")
         {
             Debug.Log("hit gO with tag Ground");
-            if(tag == "MovedByPlayer"|| tag == "DeadPiece") {
+            if(tag == "MovedByPlayer") {
                 EndTurn();
             }
             else if(tag=="Untagged"){
@@ -196,16 +214,19 @@ public class DragToMove : MonoBehaviour
         }
     }
 
+    // Sets clickable variable to given value
     public void SetClickable(bool value){
         clickable = value;
     }
 
+    // tags the piece as not clickable and dead, tells gamecontroller to end the turn
     private void EndTurn(){
         tag = "DeadPiece";
         clickable = false;
         gameController.EndTurn();
     }
 
+    // Returns true if the gameobject should be clickable
     private bool checkIfClickable(){
         return (clickable && !falling && (gameController.GetCanClickPieces()) && (!gameController.inGame || nwController.myTurn));
     }

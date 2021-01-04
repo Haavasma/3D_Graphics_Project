@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Used on a roaming camera
 public class roamCamera : MonoBehaviour
 {
     private bool alignWithMainCamera = false;
@@ -13,7 +14,7 @@ public class roamCamera : MonoBehaviour
         MainCamera = GameObject.FindGameObjectWithTag("MainCamera");   
     }
 
-    // Update is called once per frame
+    // Moves the roaming camera toward the main camera if alignwithcamera is true
     void Update()
     {
         if(alignWithMainCamera) {
@@ -26,6 +27,7 @@ public class roamCamera : MonoBehaviour
         }
     }
 
+    // Stops the animator and sets alignwithcamera to true
     public void StopRoam(){
         alignWithMainCamera = true;
         Debug.Log("stopping roam");

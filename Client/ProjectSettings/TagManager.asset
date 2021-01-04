@@ -17,6 +17,7 @@ TagManager:
   - MusicVol
   - PracticeButton
   - GoBackButton
+  - Background
   layers:
   - Default
   - TransparentFX

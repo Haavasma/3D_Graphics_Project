@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using GameNetWorkClient;
 using System;
 
+
+// network controller, uses the client package to decide state of the game
 public class Socket : MonoBehaviour
 {
     // Start is called before the first frame update
@@ -29,6 +31,7 @@ public class Socket : MonoBehaviour
 
     void Start()
     {
+        // creates pieces dictionary based on name of gameobject
         pieces = new Dictionary<string, GameObject>();
         cubes = GameObject.Find("Cubes");
         for (int i = 0; i < cubes.transform.childCount; i++)
@@ -36,12 +39,13 @@ public class Socket : MonoBehaviour
             GameObject piece = cubes.transform.GetChild(i).gameObject;
             pieces[piece.name] = piece;
         }
+        // connects to the server
         client = new NetworkClient();
+        // replace with "localhost" to connect to locally running version of server
         client.Connect("35.228.141.165");
         client.SetOnTurnChange((bool value) => {
             turnUpdated = true;
             myTurn = value;
-            Debug.Log("Turn change ayoooo");
             return true;
         });
         gameController = GameObject.Find("GameController").GetComponent<GameController>();
@@ -50,6 +54,8 @@ public class Socket : MonoBehaviour
     }
 
     // Update is called once per frame
+    // sends out transform of pieces if inside game and client has the turn
+    // updates the transforms of pieces if client does not have the turn
     void Update()
     {
         if (gameController.inGame)
@@ -84,6 +90,7 @@ public class Socket : MonoBehaviour
         }
     }
 
+    // Moves the pieces towards the state provided by the server via the client package
     private void updateTransforms()
     {
         for (int i = 0; i < cubes.transform.childCount; i++)
@@ -102,6 +109,7 @@ public class Socket : MonoBehaviour
         }
     }
 
+    // moves the pieces to the exact state provided by the server
     private void updateExactPos()
     {
         for (int i = 0; i < cubes.transform.childCount; i++)
@@ -118,32 +126,39 @@ public class Socket : MonoBehaviour
         }
     }
 
+    // tells the client to end the turn
     public void EndTurn()
     {
         Debug.Log("ending turn from network controller");
         client.EndTurn();
     }
 
+    // tells the client to queue for a game
     public void Queue()
     {
         client.queue();
     }
-
+    
+    // tells the client to stop looking for a game
     public void deQueue()
     {
         client.dequeue();
     }
+
+    // tells the client to end the game (losing)
     public void EndGame()
     {
         Debug.Log("ending game");
         client.EndGame();
     }
 
+    // returns true if client is in a game
     public bool InGame()
     {
         return client.InGame();
     }
 
+    // returns the result of the game (-1 if unfinished, 0 if loss, 1 if victory)
     public int GetResult()
     {
         return client.Result();

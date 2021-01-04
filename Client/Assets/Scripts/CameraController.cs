@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Controls the main camera given scroll wheel and mousebutton 2 inputs
 public class CameraController : MonoBehaviour
 {
     private Transform focus;

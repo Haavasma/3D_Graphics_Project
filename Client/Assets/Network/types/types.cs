@@ -1,36 +1,34 @@
 using UnityEngine;
 
+// Classes used in gamenetworkclient to convert from json-messages to objects
 namespace GameNetWorkClient
 {
-
+    // normal message containing a type
     public class Message
     {
         public string type;
 
     }
 
+    // message that also contains a channel
     public class ChannelMessage : Message
     {
         public string channel;
     }
 
+    // Class for getting a newgame message, containing your turn
     public class NewGame : ChannelMessage
     {
         public bool myTurn;
     }
 
+    // Class for getting the result of ended game
     public class GameEnd : ChannelMessage
     {
         public int result;
     }
 
-    public class Velocity : Message
-    {
-        public string id;
-
-        public Vector3 velocity;
-    }
-
+    // class for receiving transform data
     public class FormattedTransform : ChannelMessage
     {
         public string id;

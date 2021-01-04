@@ -7,6 +7,7 @@ using System.Threading;
 using System;
 
 
+// package used to communicate with server
 namespace GameNetWorkClient
 {
     public class NetworkClient
@@ -22,8 +23,6 @@ namespace GameNetWorkClient
 
         private int result = -1;
 
-        private float lastSentTime;
-
         private static Mutex mutex = new Mutex();
 
 
@@ -38,9 +37,9 @@ namespace GameNetWorkClient
         Dictionary<string, FormattedTransform> transforms = new Dictionary<string, FormattedTransform>();
 
         public NetworkClient(){
-            lastSentTime = Time.time;
         }
 
+        // connects user to server, both udp and tcp part, with the host specified
         public void Connect(string host){
             tcpClient = new TcpClient(host, 8081);
             udpClient = new UdpClient(host, 8080);
@@ -52,6 +51,7 @@ namespace GameNetWorkClient
             readTCPThread.Start();
         }
 
+        //Sends a transform with id to the channel the instance is connected to
         public void SendTransform(string objectId, Transform message)
         {
             try
@@ -65,7 +65,8 @@ namespace GameNetWorkClient
                 Debug.Log("could not send message");
             }
         }
-
+        
+        // Sends queue message to server
         public void queue()
         {
             result = -1;
@@ -89,7 +90,7 @@ namespace GameNetWorkClient
             }));
             queueThread.Start();
         }
-
+        // Sends dequeue message to server
         public void dequeue()
         {
             Thread dequeueThread = new Thread(new ThreadStart(() => {
@@ -110,6 +111,7 @@ namespace GameNetWorkClient
             dequeueThread.Start();
         }
 
+        // Tells server to end the game
         public void EndGame()
         {
             Thread endGameThread = new Thread(new ThreadStart(() =>{
@@ -133,6 +135,7 @@ namespace GameNetWorkClient
             endGameThread.Start();
         }
 
+        // constantly reads incoming udp messages
         private void ReadUDP()
         {
             while (true)
@@ -152,6 +155,7 @@ namespace GameNetWorkClient
             }
         }
 
+        // constantly reads tcp messages
         private void ReadTCP()
         {
             while (true)
@@ -170,6 +174,7 @@ namespace GameNetWorkClient
             }
         }
 
+        // sends ping on udp connection, signing that the client is still active
         private void PingChannel()
         {
             while(true)
@@ -192,6 +197,7 @@ namespace GameNetWorkClient
             }
         }
 
+        // Handles incoming messages based on type
         private void HandleRead(string message)
         {
             Message temp = JsonUtility.FromJson<Message>(message);
@@ -233,6 +239,7 @@ namespace GameNetWorkClient
             }
         }
 
+        // Ends the game, reseting values
         private void HandleEndGame()
         {
             channelMutex.WaitOne();
@@ -243,6 +250,7 @@ namespace GameNetWorkClient
             mutex.ReleaseMutex();
         }
         
+        // Sends endturn message to server on the current channel
         public void EndTurn() {
             Thread endTurnThread = new Thread(new ThreadStart(() => {
                 ChannelMessage msg = new ChannelMessage();
@@ -259,15 +267,18 @@ namespace GameNetWorkClient
             endTurnThread.Start();
         }
 
+        // updates onTransform which is called every time a transform message is received
         public void setOnTransform(Func<int> fun){
             OnTransform = fun;
         }
 
+        // updates onTurnchange which is called every time turn is changed
         public void SetOnTurnChange(Func<bool, bool> fun)
         {
             OnTurnChange = fun;
         }
 
+        // Gets the position of the gameobject with given id, returns the same position if it does not exist
         public Vector3 GetPosition(Vector3 pos, string id) {
             if(transforms.ContainsKey(id))
             {
@@ -276,6 +287,7 @@ namespace GameNetWorkClient
             return pos;
         }
 
+        // Gets the rotation of the gameobject with id, returns given rotation if it does not exist
         public Quaternion GetRotation(Quaternion rot, string id) {
             if(transforms.ContainsKey(id))
             {
@@ -284,6 +296,7 @@ namespace GameNetWorkClient
             return rot;
         }
 
+        // Gets the scale of gameobject with id, returns given scale if it does not exist
         public Vector3 GetScale(Vector3 scale, string id) {
             if(transforms.ContainsKey(id)){
                 return transforms[id].scale;
@@ -291,6 +304,7 @@ namespace GameNetWorkClient
             return scale;
         }
 
+        // Gets the velocity of gameobject with id, returns given velocity if it does not exist
         public Vector3 GetVelocity(Vector3 vel, string id)
         {
             if(transforms.ContainsKey(id)){
@@ -299,28 +313,32 @@ namespace GameNetWorkClient
             return vel;
         }
 
+        // returns the current channel given by the server
         public string getChannel()
         {
             return channel;
         }
 
-
+        // Returns true if clients turn
         public bool getMyTurn()
         {
             return myTurn;
         }
 
+        // returns true if client is in a gamechannel
         public bool InGame()
         {
             return channel != "";
         }
 
+        // returns the result of game, -1 if unfinished, 0 if loss and 1 if win
         public int Result()
         {
             //returns -1 if not finished, 0 if loss and 1 if win
             return result;
         }
 
+        // converts text to sendable bytes
         private byte[] toBytes(string text)
         {
             return Encoding.UTF8.GetBytes(text);

@@ -61,24 +61,47 @@ public class UIController : MonoBehaviour
         click = (AudioClip)Resources.Load("Sound/UI/Click");
         woosh = (AudioClip)Resources.Load("Sound/SFX/Woosh_1");
         SetUpMenu(mainMenu);
-        SetUpMenu(InGameMenu);
+        SetUpMenu(InGameMenu, new string[]{"Background"});
         SetUpCursors();
+    }
+
+    // sets up the given menu's buttons to correct positions
+    private void SetUpMenu(GameObject menu, string[] exceptionTags)
+    {
+        int amountOfButtons = menu.transform.childCount;
+        int step = 0;
+        bool skip = false;
+        float size_between_btns = (main_menu_y_interval_size - amountOfButtons*main_menu_btn_height)/(amountOfButtons-1-exceptionTags.Length);
+        for (int i = 0; i < amountOfButtons; i++) 
+        {
+            skip = false;
+            RectTransform rt = menu.transform.GetChild(amountOfButtons - 1 - i).GetComponent<RectTransform>();
+            for (int j = 0; j<exceptionTags.Length; j++)
+            {
+                if(rt.tag == exceptionTags[j])
+                {
+                    skip = true;
+                    break;
+                }
+            }
+            if(skip)
+            {
+                continue;
+            }
+            rt.anchorMin = new Vector2(main_menu_min_x, main_menu_y_interval_size/2 + step*(main_menu_btn_height + size_between_btns));
+            rt.anchorMax = new Vector2(main_menu_max_x, main_menu_y_interval_size/2 + main_menu_btn_height + step*(main_menu_btn_height + size_between_btns));
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            step++;
+        }
     }
 
     private void SetUpMenu(GameObject menu)
     {
-        int amountOfButtons = menu.transform.childCount;
-        float size_between_btns = (main_menu_y_interval_size - amountOfButtons*main_menu_btn_height)/(amountOfButtons-1);
-        for (int i = 0; i < amountOfButtons; i++) 
-        {
-            RectTransform rt = menu.transform.GetChild(amountOfButtons - 1 - i).GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(main_menu_min_x, main_menu_y_interval_size/2 + i*(main_menu_btn_height + size_between_btns));
-            rt.anchorMax = new Vector2(main_menu_max_x, main_menu_y_interval_size/2 + main_menu_btn_height + i*(main_menu_btn_height + size_between_btns));
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-        }
+        SetUpMenu(menu, new string[]{});
     }
 
+    // loads cursors and sets the cursor to handcursor
     private void SetUpCursors()
     {
         pointCursor = (Texture2D)Resources.Load("Cursors/Point");
@@ -87,6 +110,7 @@ public class UIController : MonoBehaviour
         Cursor.SetCursor(handCursor, new Vector3(40f, 0.0f, 0.0f), CursorMode.Auto);
     }
 
+    // loads the playerprefs for sound and activates the on sliders
     private void SetUpPlayerPrefs()
     {
         string[] keys = {"SoundEffectVol", "MasterVol", "MusicVol"}; 
@@ -99,13 +123,16 @@ public class UIController : MonoBehaviour
             GameObject.FindGameObjectWithTag(key).GetComponent<Slider>().value = value;
         }
     }
+
+    // sets sfx sound level to given float
     public void SetSFXlvl(float lvl)
     {
         Debug.Log("setting sfx to " + lvl);
         mixer.SetFloat("SoundEffectVol", lvl);
         PlayerPrefs.SetFloat("SoundEffectVol", lvl);
     }
-
+    
+    // Sets the Master sound level to given float
     public void SetMasterlvl(float lvl)
     {
         Debug.Log("setting master level to " + lvl);
@@ -113,37 +140,43 @@ public class UIController : MonoBehaviour
         PlayerPrefs.SetFloat("MasterVol", lvl);
     }
 
+    // Sets the Music sound level to given float
     public void SetMusiclvl(float lvl)
     {
         mixer.SetFloat("MusicVol", lvl);
         PlayerPrefs.SetFloat("MusicVol", lvl);
     }
+    // Sets the cursor to drag cursor
     public void SetDragCursor()
     {
         Cursor.SetCursor(dragCursor, new Vector3(40f, 0.0f, 0.0f), CursorMode.Auto);
     }
 
+    // Sets the cursor to pointing cursor
     public void SetPointCursor()
     {
         Cursor.SetCursor(pointCursor, new Vector3(40f, 0.0f, 0.0f), CursorMode.Auto);
     }
 
+    // Sets the cursor to hand cursor
     public void SetHandCursor()
     {
         Cursor.SetCursor(handCursor, new Vector3(100f, 0.0f, 0.0f), CursorMode.Auto);
     }
 
+    // plays highlight sound
     public void PlayHighlightSound()
     {
         SetPointCursor();
         audioSource.PlayOneShot(highlightClick);
     }
-
+    // plays click sound
     public void PlayClickSound()
     {
         audioSource.PlayOneShot(click);
     }
 
+    // Toggles practice mode
     public void SetPractice(bool value){
         mainMenu.GetComponent<Animator>().SetBool("Practice", value);
         PracticeMenu.SetActive(value);
@@ -151,6 +184,7 @@ public class UIController : MonoBehaviour
         gameController.SetPractice(value);
     }
 
+    // toggles main menu, if turned off, activate practice trigger on animator, and set pieces clickable
     public void SetMenusActive(bool value)
     {
         mainMenu.SetActive(value);
@@ -162,16 +196,18 @@ public class UIController : MonoBehaviour
             gameController.SetCanClickPieces(value);
         }
     }
-
+    // Sets Settings menu's active state to given value
     public void SetSettingsActive(bool value){
         settingsMenu.SetActive(value);
     }
 
+    // Sets ingame menu's active state to given value
     public void SetInGameMenuActive(bool value)
     {
         InGameMenu.SetActive(value);
     }
 
+    // sets text to your turn or their turn from given value
     public void SetTurnText(bool value)
     {
         if(value)
@@ -185,25 +221,22 @@ public class UIController : MonoBehaviour
             turnText.GetComponent<Animation>().Play();
         }
     }
-
+    // Sets turn text active state to given value
     public void SetTurnTextActive(bool value)
     {
         turnText.SetActive(value);
     }
 
+    // toggles in game menu
     public void toggleInGameMenu()
     {
         InGameMenu.SetActive(!InGameMenu.activeSelf);
     }
 
+    // Quits the application
     public void ExitGame()
     {
         Application.Quit();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

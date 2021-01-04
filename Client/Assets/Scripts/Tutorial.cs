@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// Controls the tutorial
 public class Tutorial : MonoBehaviour
 {
     private int step = 0;
@@ -15,6 +16,8 @@ public class Tutorial : MonoBehaviour
     private GameObject Pointer;
 
     private GameObject PracticeButton;
+
+    private GameObject FindGameButton;
 
     private GameObject mainmenu;
 
@@ -29,6 +32,7 @@ public class Tutorial : MonoBehaviour
         goBackButton = GameObject.FindWithTag("GoBackButton");
     }
 
+    // Destroys the gameobject if tutorial is already finished
     void Start()
     {
         if(PlayerPrefs.GetInt("Tutorial") == -1)
@@ -42,32 +46,50 @@ public class Tutorial : MonoBehaviour
         tutorialText = transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>();
         Pointer = GameObject.Find("Pointer");
         PracticeButton = GameObject.FindWithTag("PracticeButton");
+        FindGameButton = GameObject.Find("FindGame");
         mainmenu = GameObject.Find("MainMenu");
-        setInteractableMenu(mainmenu, false);
+        setInteractableMenu(mainmenu, false, new string[]{"PracticeButton"});
     }
 
-    void setInteractableMenu(GameObject menu, bool value)
+    // Sets the given menu's buttons interactable to given value, except for those with tags in exceptionTags
+    void setInteractableMenu(GameObject menu, bool value, string[] exceptionTags)
     {
         for(int i = 0; i<menu.transform.childCount; i++)
         {
             Transform button = menu.transform.GetChild(i);
-            if(button.tag != "PracticeButton")
+            button.GetComponent<Button>().interactable = value;
+
+            if(exceptionTags == null || exceptionTags.Length == 0)
             {
-                button.GetComponent<Button>().interactable = value;
-            } 
+                continue;
+            }
+            for (int j = 0; j<exceptionTags.Length; j++)
+            {
+                if(button.tag == exceptionTags[j])
+                {
+                    button.GetComponent<Button>().interactable = !value;
+                    break;
+                } 
+            }
         }
+    }
+
+    void setInteractableMenu(GameObject menu, bool value)
+    {
+        setInteractableMenu(menu, value, null);
     }
 
     // Update is called once per frame
     void Update()
     {
+        // if game is lost, reset the pieces
         if(gameController.GetGameLost())
         {
             gameController.ResetPieces();
         }
         switch(step)
         {
-            case 0:
+            case 0: // enter practice
                 Pointer.transform.position = Vector3.MoveTowards(Pointer.transform.position, 
                                                                 PracticeButton.transform.position + new Vector3(0.0f, -20.0f, 0.0f),
                                                                 200f * Time.deltaTime);
@@ -128,29 +150,47 @@ public class Tutorial : MonoBehaviour
                 }
                 break;
             
-            case 6:
+            case 6: // Exit practice
                 Pointer.transform.position = Vector3.MoveTowards(Pointer.transform.position, 
                                                                 goBackButton.transform.position + new Vector3(0.0f, -20.0f, 0.0f),
-                                                                400f * Time.deltaTime);   
+                                                                600f * Time.deltaTime);   
                 
                 Debug.Log(gameController.GetInPractice());
                 if(!gameController.GetInPractice())
                 {
-                    Debug.Log("tutorial ended");
-                    // end tutorial
-                    PlayerPrefs.SetInt("Tutorial", -1);
-                    Destroy(gameObject);
+                    tutorialText.text = "Press Find Game to look for an opponent";
+                    nextStep();
                 }
-                break; 
+                break;
+
+            case 7: // Find opponent
+                Pointer.transform.position = Vector3.MoveTowards(Pointer.transform.position, 
+                                                                FindGameButton.transform.position + new Vector3(0.0f, -20.0f, 0.0f),
+                                                                600f * Time.deltaTime);
+                if(gameController.GetInQueue())
+                {
+                    EndTutorial();
+                }
+                break;
+                
 
             default:
                 break; 
         }
     }
 
+    // Changes animation and increments step number
     void nextStep()
     {
         step++;
         animator.SetTrigger("nextStep");
+    }
+
+    void EndTutorial()
+    {
+        Debug.Log("tutorial ended");
+        // end tutorial
+        PlayerPrefs.SetInt("Tutorial", -1);
+        Destroy(gameObject);
     }
 }

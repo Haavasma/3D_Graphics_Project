@@ -85,9 +85,11 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // toggles ingame menu if escape is pushed
         if(inGame && Input.GetKeyDown(KeyCode.Escape)){
             uIController.toggleInGameMenu();
         }
+        // Sets the correct pieces to clickable as soon as all of the pieces have stopped falling
         if(initialPositions.Keys.Count != amountOfPieces && pieces.TrueForAll((GameObject p)=>{return !p.GetComponent<DragToMove>().falling;})){
             Debug.Log("YOYOYO");
             pieces.ForEach((GameObject p) => {
@@ -98,11 +100,14 @@ public class GameController : MonoBehaviour
                     p.GetComponent<DragToMove>().SetClickable(true);
                 }
             });
-        } else if(nwController.GetResult() == 1 && inGame){ 
+        } 
+        // Calls handlewin if networkcontroller has 1 as result (a win)
+        else if(nwController.GetResult() == 1 && inGame){ 
             HandleWin();
         }
     }
 
+    // spawns needed components for a game to start
     private void SetUpGame(){
         initialPositions = new Dictionary<int, Vector3>();
         cubes = GameObject.FindWithTag("CubeHolder");
@@ -158,6 +163,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // signals the game has ended and turns on a button to let the player leave the game. 
     private void HandleGameEnd()
     {
         ResultText.SetActive(true);
@@ -167,6 +173,7 @@ public class GameController : MonoBehaviour
         LeaveGameButton.SetActive(true);
     }
 
+    // Calls loss if criteria for being able to lose are met
     public void HandleLose(){
         if((!nwController.myTurn || !inGame) && !gameLost){
             gameLost = true;
@@ -176,9 +183,9 @@ public class GameController : MonoBehaviour
             Debug.Log("losing");
             Lose();
         }
-        //Play losing sound;
     }
 
+    // tells networkcontroller to end the game, and tells the user it has lost
     private void Lose()
     {
         Debug.Log("YOU LOSE");
@@ -190,6 +197,7 @@ public class GameController : MonoBehaviour
         HandleGameEnd();
     }
 
+    // Tells the user it has won
     public void HandleWin(){
         if(!gameEnd){
             Debug.Log("YOU WIN");
@@ -198,6 +206,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // Toggles the findGameButton's text and queue
     public void FindGame(GameObject findGameButton){
         if(findGameButton.GetComponentInChildren<Text>().text == "Find game"){
             findGameButton.GetComponentInChildren<Text>().text = "Cancel";
@@ -215,11 +224,13 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // Sets inPractice to given value
     public void SetPractice(bool value)
     {
         inPractice = value;
     }
 
+    // sets canClickPieces to given value
     public void SetCanClickPieces(bool value)
     {
         canClickPieces = value;
@@ -228,6 +239,7 @@ public class GameController : MonoBehaviour
             inPractice = false;
         }
     }
+
 
     public bool GetCanClickPieces()
     {
@@ -239,6 +251,12 @@ public class GameController : MonoBehaviour
         return inPractice;
     }
 
+    public bool GetInQueue()
+    {
+        return inQueue;
+    }
+
+    // resets the Pieces to their initial state after falling stopped
     public void ResetPieces(){
         gameLost = false;
         if(initialPositions.Keys.Count==pieces.Count && !inGame){
@@ -264,6 +282,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // Stars turn-ending process
     public void EndTurn(){
         audioSource.PlayOneShot(ding);
         piecesDropped++;
@@ -276,6 +295,7 @@ public class GameController : MonoBehaviour
         // play some animation for ending turn or w/e
     }
 
+    // Loses the game if not finished, tells the uicontroller to activate and deactivate the correct menus and sets up the tower again
     public void LeaveGame(){
         if(!gameEnd){
             Lose();
@@ -290,6 +310,7 @@ public class GameController : MonoBehaviour
         gameEnd = false;
     }
 
+    // destroys current pieces and builds the tower again
     public void SetUp()
     {
         foreach(GameObject p in pieces)
@@ -309,20 +330,13 @@ public class GameController : MonoBehaviour
         return gameLost;
     }
 
+    // Used to calculate where the camerafocus should be positioned based on the pieces
     Vector3 CalculateFocusPosition(int pieces, float pieceHeight, Vector3 startPos){
         float height = (pieces/(3*2))*pieceHeight;
         return new Vector3(startPos.x, startPos.y += height, startPos.z);
     }
 
-
-    void SpawnStabilizer(Vector3 center, float width){
-        for(int i = 0; i<4; i++) {
-            GameObject stabilizer = Instantiate(Stabilizer, center + new Vector3((float)(((i+1)%2) * (i<2 ? 1 : -1)) * width*1.01f , 0.0f, (float)((i%2) * (i<2 ? 1 : - 1)) * width*1.01f), Quaternion.Euler(0, 90*-i, 0));
-            stabilizer.transform.localScale += new Vector3(0.0f, 0.0f, 0.6f);
-            stabilizer.tag = "BottomPiece";
-        }
-    }
-
+    // ends the turn after given amount of seconds
     IEnumerator EndTurnAfterSeconds(int seconds){
         audioSource.PlayOneShot(clock);
         yield return new WaitForSeconds(seconds);
@@ -331,7 +345,8 @@ public class GameController : MonoBehaviour
         nwController.EndTurn();
         canClickPieces = true;
     }
-
+    
+    // Checks every second if a game is found, breaks if dequeued or game is found
     IEnumerator pollGameFound(GameObject findGameButton){
         while(true){
             Debug.Log("polling");
@@ -356,6 +371,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // keeps changing the given gameobject's text component between the given states.
     IEnumerator TextAnimation(GameObject text, string[] states, float intervalTime)
     {
         Text textText = text.GetComponent<Text>();

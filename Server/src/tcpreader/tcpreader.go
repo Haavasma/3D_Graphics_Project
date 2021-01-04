@@ -28,6 +28,7 @@ func ReadTCP(socket net.Listener) {
 	}
 }
 
+// reads messages from given connection
 func handleConnection(conn net.Conn) {
 	for {
 		var buf [1024]byte
@@ -42,6 +43,7 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
+// handles a message from a connection
 func handleMessage(conn net.Conn, buf [1024]byte, n int) {
 	var result map[string]interface{}
 
@@ -64,6 +66,7 @@ func CheckQueue() {
 	for {
 		fmt.Println("checking queue")
 		queue.Mux.Lock()
+		// sends ping to everyone in queue to keep connection active
 		for i := 0; i < len(queue.Q); i++ {
 			pingObj := make(map[string]interface{})
 			pingObj["type"] = "ping"
@@ -74,15 +77,20 @@ func CheckQueue() {
 			}
 			queue.Q[i].Write(bytes)
 		}
+		// check the queue and pair up adjacent queued connections
 		if len(queue.Q) > 1 {
+			channels.Mux.Lock()
 			for {
+				// Create new channel id
 				newChannelUUID := uuid.New().String()
 
+				// create message
 				sendObj := make(map[string]interface{})
 				sendObj["channel"] = newChannelUUID
 				sendObj["type"] = "newGame"
 				sendObj["myTurn"] = false
 
+				// Send myturn true to one and false to other
 				bytes1, err := json.Marshal(sendObj)
 				if err != nil {
 					fmt.Println("Can't serialize", sendObj)
@@ -97,29 +105,30 @@ func CheckQueue() {
 				queue.Q[0].Write(bytes1)
 				queue.Q[1].Write(bytes2)
 
-				channels.Mux.Lock()
 				channels.V[newChannelUUID] = append(channels.V[newChannelUUID], queue.Q[0], queue.Q[1])
-				channels.Mux.Unlock()
 
 				queue.Q = queue.Q[2:]
-
 				if len(queue.Q) < 2 {
 					break
 				}
 			}
+			channels.Mux.Unlock()
 		}
 		fmt.Println(queue.Q)
 		queue.Mux.Unlock()
+		// repeat check every 3 seconds
 		time.Sleep(3 * time.Second)
 	}
 }
 
+// adds the tcp connection to the game queue
 func handleQueue(conn net.Conn, result map[string]interface{}) {
 	queue.Mux.Lock()
 	queue.Q = append(queue.Q, conn)
 	queue.Mux.Unlock()
 }
 
+// removes the connection from the game queue
 func handleDeQueue(conn net.Conn) {
 	fmt.Println("got dequeue request")
 
@@ -134,6 +143,8 @@ func handleDeQueue(conn net.Conn) {
 
 	queue.Mux.Unlock()
 }
+
+// handles end turn message
 func handleEndTurn(conn net.Conn, result map[string]interface{}) {
 	channel, ok := result["channel"].(string)
 
@@ -142,8 +153,10 @@ func handleEndTurn(conn net.Conn, result map[string]interface{}) {
 		fmt.Println("could not read channel")
 		return
 	}
+	// get correct connections to send message to
 	connToSend := channels.V[channel]
 
+	// send toggleturn message to everyone in channel
 	sendObj := make(map[string]interface{})
 	sendObj["type"] = "toggleTurn"
 	bytes, err := json.Marshal(sendObj)
@@ -156,6 +169,7 @@ func handleEndTurn(conn net.Conn, result map[string]interface{}) {
 	}
 }
 
+// handles game lost message from client
 func handleGameLost(conn net.Conn, result map[string]interface{}) {
 	channel, ok := result["channel"].(string)
 
@@ -165,7 +179,10 @@ func handleGameLost(conn net.Conn, result map[string]interface{}) {
 		return
 	}
 
+	// find connections to send message to
 	connToSend := channels.V[channel]
+
+	// Send result 0 to loser and 1 to others
 	sendObj := make(map[string]interface{})
 	sendObj["type"] = "EndGame"
 	sendObj["result"] = 1
@@ -189,13 +206,16 @@ func handleGameLost(conn net.Conn, result map[string]interface{}) {
 			c.Write(bytes2)
 		}
 	}
+	// remove from channels
 	channels.Mux.Lock()
 	delete(channels.V, channel)
 	channels.Mux.Unlock()
 }
 
+// handles disconnect
 func handleDisconnect(conn net.Conn) {
 	fmt.Println("handling disconnect")
+	// reports loss to correct connection by finding the disconnected connection in channels
 	for channel, x := range channels.V {
 		for _, c := range x {
 			if c == conn {
