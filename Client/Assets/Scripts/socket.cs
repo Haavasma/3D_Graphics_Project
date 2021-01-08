@@ -8,6 +8,8 @@ using System;
 public class Socket : MonoBehaviour
 {
     // Start is called before the first frame update
+
+    [SerializeField] string ipAddress = "localhost";
     private NetworkClient client;
 
     private GameObject cubes;
@@ -42,7 +44,7 @@ public class Socket : MonoBehaviour
         // connects to the server
         client = new NetworkClient();
         // replace with "localhost" to connect to locally running version of server
-        client.Connect("35.228.141.165");
+        client.Connect(ipAddress);
         client.SetOnTurnChange((bool value) => {
             turnUpdated = true;
             myTurn = value;
