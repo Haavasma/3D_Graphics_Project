@@ -4952,6 +4952,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d30f28a0c469d8f438cd65e8a9960f7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ipAddress: localhost
   myTurn: 0
 --- !u!4 &1306372937
 Transform:
